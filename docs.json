@@ -27,6 +27,12 @@
         "tab": "Felhasználói kézikönyvek",
         "groups": [
           {
+            "group": "Telepítés",
+            "pages": [
+              "tech/telepitesi-kezikoenyv"
+            ]
+          },
+          {
             "group": "Kezdő lépések",
             "pages": ["introduction", "quickstart", "concepts"]
           },
@@ -59,10 +65,6 @@
               "integrations/activity-log",
               "integrations/charts"
             ]
-          },
-          {
-            "group": "Telepítés",
-            "pages": ["tech/telepitesi-kezikoenyv"]
           },
           {
             "group": "Függelék",
