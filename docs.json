@@ -63,6 +63,12 @@
           {
             "group": "Telepítés",
             "pages": ["tech/telepitesi-kezikoenyv"]
+          },
+          {
+            "group": "Függelék",
+            "pages": [
+              "appendix/screenshots"
+            ]
           }
         ]
       },
