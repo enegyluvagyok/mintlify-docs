@@ -1,133 +1,51 @@
----
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
-icon: 'star'
----
+**Az Analyse** egy webalapú tesztmenedzsment platform, amely segít a QA (minőségbiztosítási) csapatoknak összeszedettnek maradni és magabiztosan szoftvert kiadni.
 
-## Setting up
+Rendszerezze a tesztelési lefedettséget valós felhasználói folyamatok köré, ossza ki a teszteseteket a csapatának, futtassa le a teszteket a beépített siker/hiba követéssel, és exportálja az eredményeket PDF vagy Excel jelentésként – mindezt egyetlen helyen.Quick Start
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Kilövés!" icon="rocket" href="/quickstart">
+    Állítsd be az első projektedet, hozz létre egy felhasználói utat, és futtasd az első tesztedet percek alatt.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
 
-## Create beautiful pages
+  <Card title="Fő részek" icon="lightbulb" href="/concepts">
+    Értsd meg, hogy a projektek, modulok, journey és eredmények összefüggéseit.
+  </Card>
 
-Everything you need to create world-class documentation.
+  <Card title="Teszt tervezés" icon="clipboard-list" href="/test-plans/overview">
+    Hozd létre a teszttervedet a journey verziókból és oszd meg a csapattal.
+  </Card>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+  <Card title="Tesztvégrehajtás" icon="play" href="/test-runs/overview">
+    Futtassa a teszteket, rögzítse az eredményeket, és kövesse nyomon a folyamatot valós időben..
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Make your content agent ready
+## **A(z) Analyse működése**
 
-Make your docs work for humans and AI agents alike.
+**1. A projekt rendszerezése**\
+Hozzon létre egy projektet, majd adjon hozzá modulokat a funkcionális területek ábrázolásához. Minden modulon belül határozza meg a folyamatokat (Journeys) – azokat a felhasználói útvonalakat, amelyeket tesztelni szeretne.
 
-<Columns cols={2}>
-  <Card
-    title="Prompt component"
-    icon="robot"
-    href="/agent-ready/prompt"
-  >
-    Embed shareable AI prompts readers can copy or open in Cursor.
-  </Card>
-  <Card
-    title="Visibility"
-    icon="eye"
-    href="/agent-ready/visibility"
-  >
-    Show different content to humans and agents reading your docs.
-  </Card>
-  <Card
-    title="Contextual menu"
-    icon="bolt"
-    href="/agent-ready/contextual"
-  >
-    Give readers one-click access to Claude, ChatGPT, Cursor, and more.
-  </Card>
-  <Card
-    title="AI coding tools"
-    icon="wand-magic-sparkles"
-    href="/ai-tools/claude-code"
-  >
-    Set up Claude Code, Cursor, or Windsurf with Mintlify's skill.
-  </Card>
-</Columns>
+**2. A tesztesetek verziózása**\
+Minden folyamat több verzióval is rendelkezhet, így a termék fejlődésével párhuzamosan egymás mellett tarthatja a vázlatos és a közzétett teszteset-készleteket.
 
-## Need inspiration?
+**3. Tesztterv készítése**\
+A tesztterv-készítő (Test Plan Builder) segítségével válassza ki az adott ciklusban tesztelni kívánt folyamatverziókat. Rendeljen hozzá minden egyes elemet egy csapattaghoz, majd mentse el a tervet.
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+**4. Végrehajtás és jelentéskészítés**\
+Indítson tesztfutást a terve alapján. Lépkedjen végig az egyes teszteseteken, rögzítse az eredményeket (sikeres/sikertelen/blokkolt), és a folyamat végén exportálja a jelentést PDF vagy Excel formátumban.
+
+## Nézd körbe!
+
+<CardGroup cols={3}>
+  <Card title="Projektek & struktúra" icon="folder-tree" href="/projects/overview">
+    Tanuld meg, hogyan rendszerezheted a tesztlefedettségedet projektek, modulok és folyamatok (vagy útvonalak/journeys) segítségével.
+  </Card>
+
+  <Card title="Integrációk" icon="plug" href="/integrations/issue-trackers">
+    Jira, Redmine, Figma és CMP rendszerkapcsolatok
+  </Card>
+
+  <Card title="Export & Import" icon="file-export" href="/integrations/export-import">
+    Töltsd le a PDF/Excel riportokat és használd tömeges műveletekhez.
+  </Card>
+</CardGroup>

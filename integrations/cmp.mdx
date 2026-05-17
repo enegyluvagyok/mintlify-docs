@@ -1,0 +1,53 @@
+---
+title: "CMP konfiguráció kinyerése Playwright segítségével"
+description: "Rendelj CMP azonosítót egy projekthez, és az Analyse háttérben automatikusan kinyeri a CMP konfigurációs fájlt XLS, JSON és egyéb formátumokban."
+---
+
+Az Analyse képes automatikusan kinyerni egy projekt **CMP (Content Management Platform) konfigurációját**, és azt strukturált formátumban (XLS, JSON stb.) elérhetővé tenni a csapat számára. Az integráció projektenként konfigurálható a CMP azonosító megadásával.
+
+## Hogyan működik?
+
+<Steps>
+  <Step title="CMP azonosító megadása">
+    Projekt létrehozásakor vagy szerkesztésekor add meg a projekt **CMP azonosítóját** az integrációs mezőben. A mező opcionális — ha üresen hagyod, a konfigurációkinyerés nem fut le az adott projekthez.
+  </Step>
+  <Step title="Háttérfolyamat indítása">
+    Az Analyse egy háttérben futó **Playwright** folyamatot indít, amely a CMP azonosítót paraméterként átadva megnyit egy helyi weboldalt.
+  </Step>
+  <Step title="Konfigurációs JS fájl betöltése">
+    A helyi oldal betölti a CMP konfigurációs JavaScript fájlt, amelyet Playwright headless böngészőként hajt végre — így a böngészős CORS-korlátok és a dinamikus JS végrehajtás sem jelent akadályt.
+  </Step>
+  <Step title="Adatok kinyerése és exportálása">
+    Playwright kinyeri az adatokat az oldalból, majd az Analyse XLS, JSON és egyéb formátumokban teszi elérhetővé a konfigurációt.
+  </Step>
+</Steps>
+
+## Miért Playwright? (workaround)
+
+A CMP konfigurációs fájlok jellemzően csak böngészőkörnyezetben tölthetők be helyesen: CORS-szabályok blokkolhatják az egyszerű HTTP-kéréseket, és a konfiguráció gyakran dinamikus JavaScript végrehajtást igényel. Egy sima szerver oldali HTTP-lekérés ezért nem működne.
+
+Ezért az Analyse **Playwright**-ot használ headless böngészőként:
+
+```text
+CMP azonosító → helyi szerver URL összeállítása paraméterekkel
+                ↓
+        Playwright headless böngésző megnyitja az URL-t
+                ↓
+        CMP konfigurációs JS betöltődik és végrehajtódik
+                ↓
+        Playwright kinyeri az adatokat az oldalból
+                ↓
+        XLS / JSON / egyéb fájlok generálása
+```
+
+<Warning>
+  A Playwright folyamat lefutásához a helyi webszervernek elérhetőnek kell lennie az Analyse alkalmazás számára. Ha a konfiguráció kinyerése nem sikerül, ellenőrizd, hogy a helyi webszerver fut-e, és a megadott CMP azonosító helyes-e.
+</Warning>
+
+## Konfiguráció
+
+| Mező | Kötelező | Leírás |
+| --- | --- | --- |
+| CMP azonosító | Nem | A projekt CMP-beli azonosítója; paraméterként kerül átadásra a helyi URL-nek |
+
+A CMP azonosítót a projekt létrehozásakor vagy utólag a projekt szerkesztési felületén adhatod meg. Bővebben lásd a [Projektbeállítások](/projects/overview) oldalt.

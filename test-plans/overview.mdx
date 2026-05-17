@@ -1,0 +1,50 @@
+---
+title: "Tesztelési tervek: tesztelési ciklusok rendszerezése és nyomon követése"
+description: "Ismerd meg, mi az a teszterv  az Analyse-ban, hogyan működnek a piszkozat, aktív és archivált állapotok, valamint hogyan kapcsolódnak a tervek a tesztfuttatásokhoz  és a kiadási ciklusokhoz."
+---
+
+A tesztterv egy elnevezett, strukturált gyűjtemény azokból a journey verziókból, amelyeket a csapatod együtt szándékozik tesztelni. Ahelyett, hogy ad hoc futtatnád a teszteket, a kívánt verziókat egy tervbe csoportosítod, hozzárendeled a tesztelőkhöz, és egy helyen követed nyomon az előrehaladást. Minden tesztterv egyetlen projekthez tartozik.
+
+## Mit tartalmaz egy tesztterv
+
+Minden teszttervnek van neve és opcionális leírása, hogy a csapatod megértse annak hatókörét és célját. Emellett van egy **státusza**, amely tükrözi, hol tart az életciklusában.
+
+<Tabs>
+  <Tab title="Vázlat">
+    A terv összeállítás alatt áll. Még mindig adhatsz hozzá vagy távolíthatsz el journey verziókat, és frissítheted a hozzárendeléseket. Tesztelés még nem kezdődött.
+  </Tab>
+  <Tab title="Aktív">
+    A terv nyitott végrehajtásra. A hozzárendelt tesztelők futtathatják a benne szereplő journey verziókat.
+  </Tab>
+  <Tab title="Archivált">
+    A terv lezárult. Előzmény-hivatkozás céljából megmarad, de már nem aktív.
+  </Tab>
+</Tabs>
+
+## Az aktív terv
+
+Egyszerre csak **egyetlen tesztterv jelölhető aktívnak projektenként**. Az aktív terv az, amelyet a Tesztterv-készítő olvas és amelybe ír. Amikor a készítőben bepipálsz vagy kiveszel journey verziókat, vagy tesztelőket rendelsz hozzá, mindig az aktív tervvel dolgozol.
+
+Amikor aktívvá jelölsz egy tervet, az ugyanazon projekt bármely korábban aktív terve automatikusan inaktívvá válik.
+
+<Note>
+  Egy tervet aktívvá tehetsz a Teszttervek listából az **Aktuális terv** kapcsoló átváltásával a terv szerkesztési űrlapján, vagy a listában elérhető **Aktívvá tétel** művelet használatával.
+</Note>
+
+## Hogyan kapcsolódnak a teszttervek a tesztvégrehajtáshoz
+
+A tesztterv meghatározza, _mit_ kell tesztelni és _ki által_. A tervben szereplő minden journey verzió egy teszttervelem, amely saját felelőssel és végrehajtási státusszal rendelkezik. Amikor a tesztelők végighaladnak a hozzárendelt elemeken, ezek az eredmények bekerülnek a projekt összesített tesztelési lefedettségébe.
+
+<CardGroup cols={3}>
+  <Card title="Tesztterv összeállítása" icon="hammer" href="/test-plans/building">
+    Használd a vizuális készítőt modulok, journey-k és verziók kiválasztásához az aktív tervbe.
+  </Card>
+
+  <Card title="Tesztelők hozzárendelése" icon="user-check" href="/test-plans/assigning">
+    Rendel egyéni tesztelőket minden elemhez, vagy használd a tömeges hozzárendelést az összes látható elem egyszerre való lefedéséhez.
+  </Card>
+
+  <Card title="Tesztvégrehajtás" icon="list-check" href="/test-runs/overview">
+    Indíts tesztfuttatást az aktív tervhez, és kövesd nyomon az előrehaladást elemenként.
+  </Card>
+</CardGroup>

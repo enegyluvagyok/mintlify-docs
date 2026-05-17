@@ -1,0 +1,737 @@
+---
+title: "Adatbázis-terv"
+description: "Az Analyse platform teljes adatbázis-sémájának dokumentációja: táblák, oszlopok, kapcsolatok, indexek és adatbázisra vonatkozó követelmények."
+---
+
+Az Analyse platform MySQL 9.1\+ adatbázist használ (fejlesztésben), éles környezetben MySQL 8.0\+ ajánlott. Az összes tábla `utf8mb4_unicode_ci` karakterkészlettel kerül létrehozásra. Ez a dokumentum az aktuális sémát írja le a phpMyAdmin SQL dump alapján (2026-05-17).
+
+<Warning>
+  Az adatbázis jelenleg **MyISAM** motort használ a legtöbb táblánál. Éles környezetben az **InnoDB** motor erősen ajánlott a tranzakciókezelés, külső kulcsok és összeomlás-biztonság miatt. Lásd: [Adatbázisra vonatkozó követelmények](#adatbazisra-vonatkozo-kovetelmenyek).
+</Warning>
+
+## Táblák áttekintése
+
+| Tábla | Leírás |
+| --- | --- |
+| `users` | Felhasználói fiókok |
+| `sessions` | Aktív munkamenetek |
+| `password_reset_tokens` | Jelszó-visszaállítási tokenek |
+| `permissions` | Spatie jogosultságok |
+| `roles` | Spatie szerepkörök |
+| `model_has_permissions` | Modell–jogosultság pivot |
+| `model_has_roles` | Modell–szerepkör pivot |
+| `role_has_permissions` | Szerepkör–jogosultság pivot |
+| `activity_log` | Spatie tevékenységnapló |
+| `projects` | Projektek |
+| `modules` | Modulok (projekten belül) |
+| `journeys` | Tesztszcenáriók |
+| `journey_versions` | Journey verziók |
+| `journey_steps` | Tesztszcenárió lépések (nested set) |
+| `journey_step_meta` | Lépés metaadatok |
+| `test_plans` | Teszttervek |
+| `test_plan_items` | Tesztterv elemek (journey version hozzárendelések) |
+| `test_runs` | Tesztfuttatások |
+| `test_run_items` | Tesztfuttatás elemek (egy journey version eredménye) |
+| `test_run_steps` | Lépésszintű eredmények |
+| `test_run_issues` | Megtalált hibák, issue-k |
+| `test_devices` | Teszteléshez használt eszközök |
+| `test_device_test_run` | Eszköz–futtatás pivot |
+| `releases` | Szoftverkiadások |
+| `domain_environments` | Domain/környezet beállítások |
+| `custom_fields` | Egyéni mezők definíciói |
+| `custom_values` | Egyéni mező értékek |
+| `event_schemas` | Analitikai eseménysémák |
+| `event_schema_keys` | Eseményséma kulcsok |
+| `issue_trackers` | Issue tracker integrációk (Jira, Redmine) |
+| `figma_settings` | Figma API konfiguráció |
+| `jobs` | Laravel Queue job-ok |
+| `job_batches` | Laravel Queue job batch-ek |
+| `failed_jobs` | Sikertelen queue job-ok |
+| `cache` | Laravel cache (DB driver) |
+| `cache_locks` | Laravel cache zárak |
+| `migrations` | Laravel migráció-nyilvántartó |
+
+---
+
+## Felhasználók és hitelesítés
+
+### `users`
+
+Felhasználói fiókok. Az `approved` mező adminisztrátori jóváhagyást jelöl.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `default_project_id` | bigint UNSIGNED | YES | Alapértelmezett projekt (→ `projects.id`) |
+| `name` | varchar(125) | NO | Teljes név |
+| `email` | varchar(125) | NO | E-mail cím (egyedi) |
+| `email_verified_at` | timestamp | YES | E-mail hitelesítés időpontja |
+| `approved` | tinyint(1) | NO | Adminisztrátori jóváhagyás, alapért.: `0` |
+| `password` | varchar(125) | NO | Bcrypt jelszóhash |
+| `remember_token` | varchar(100) | YES | Emlékezz rám token |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (email)`
+
+### `sessions`
+
+Adatbázis-alapú munkamenet-tároló.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | varchar(125) | NO | Munkamenet azonosító (PK) |
+| `user_id` | bigint UNSIGNED | YES | Bejelentkezett felhasználó (→ `users.id`) |
+| `ip_address` | varchar(45) | YES | Kliens IP-cím (IPv6-kompatibilis) |
+| `user_agent` | text | YES | Böngésző user-agent |
+| `payload` | longtext | NO | Titkosított munkamenet-tartalom |
+| `last_activity` | int | NO | Utolsó aktivitás (Unix timestamp) |
+
+**Indexek:** `(user_id)`, `(last_activity)`
+
+### `password_reset_tokens`
+
+Jelszó-visszaállítási tokenek, e-mail alapú PK-val.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `email` | varchar(125) | NO | Felhasználó e-mail (PK) |
+| `token` | varchar(125) | NO | Hash-elt visszaállítási token |
+| `created_at` | timestamp | YES | Token létrehozásának időpontja |
+
+---
+
+## Jogosultságkezelés (Spatie Permission)
+
+### `roles`
+
+Szerepkörök. A `guard_name` általában `web`.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `name` | varchar(125) | NO | Szerepkör neve (pl. `admin`, `tester`) |
+| `guard_name` | varchar(125) | NO | Auth guard neve |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (name, guard_name)`
+
+### `permissions`
+
+Jogosultságok listája.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `name` | varchar(125) | NO | Jogosultság neve (pl. `test-run.create`) |
+| `guard_name` | varchar(125) | NO | Auth guard neve |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (name, guard_name)`
+
+### `model_has_roles`
+
+Polimorf pivot: modellekhez rendelt szerepkörök.
+
+| Oszlop | Típus | Leírás |
+| --- | --- | --- |
+| `role_id` | bigint UNSIGNED | → `roles.id` |
+| `model_type` | varchar(125) | Pl. `App\Models\User` |
+| `model_id` | bigint UNSIGNED | A modell azonosítója |
+
+**PK:** `(role_id, model_id, model_type)` · **Index:** `(model_id, model_type)`
+
+### `model_has_permissions`
+
+Polimorf pivot: modellekhez rendelt közvetlen jogosultságok.
+
+| Oszlop | Típus | Leírás |
+| --- | --- | --- |
+| `permission_id` | bigint UNSIGNED | → `permissions.id` |
+| `model_type` | varchar(125) | Pl. `App\Models\User` |
+| `model_id` | bigint UNSIGNED | A modell azonosítója |
+
+**PK:** `(permission_id, model_id, model_type)` · **Index:** `(model_id, model_type)`
+
+### `role_has_permissions`
+
+Szerepkör–jogosultság pivot.
+
+| Oszlop | Típus | Leírás |
+| --- | --- | --- |
+| `permission_id` | bigint UNSIGNED | → `permissions.id` |
+| `role_id` | bigint UNSIGNED | → `roles.id` |
+
+**PK:** `(permission_id, role_id)` · **Index:** `(role_id)`
+
+---
+
+## Projektek és struktúra
+
+### `projects`
+
+Legfelső szintű konténerek. A `key` rövid, egyedi azonosító (pl. `PROJ`).
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `cmp_id` | varchar(125) | YES | CMP integráció azonosítója |
+| `sort` | int UNSIGNED | NO | Sorrend, alapért.: `0` |
+| `key` | varchar(125) | NO | Egyedi rövid azonosító |
+| `name` | varchar(125) | NO | Projekt neve |
+| `description` | text | YES | Leírás |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (key)`, `(sort)`
+
+### `modules`
+
+Projekten belüli funkcionális csoportok.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `sort` | int UNSIGNED | NO | Sorrend |
+| `project_id` | bigint UNSIGNED | NO | → `projects.id` |
+| `key` | varchar(125) | NO | Projekten belül egyedi azonosító |
+| `name` | varchar(125) | NO | Modul neve |
+| `description` | text | YES | Leírás |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (project_id, key)`, `(sort)`
+
+### `journeys`
+
+Újrafelhasználható tesztszcenáriók. A `submodule` opcionális almappa-csoportosítást tesz lehetővé.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `sort` | int UNSIGNED | NO | Sorrend |
+| `module_id` | bigint UNSIGNED | NO | → `modules.id` |
+| `key` | varchar(125) | NO | Modulon belül egyedi azonosító |
+| `name` | varchar(125) | NO | Journey neve |
+| `submodule` | varchar(125) | YES | Almappa/almodul neve |
+| `description` | text | YES | Leírás |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (module_id, key)`, `(sort)`
+
+---
+
+## Journey verziók és lépések
+
+### `journey_versions`
+
+Egy journey verzionált tesztspecifikációi. Az `is_draft=0` jelenti a publikált állapotot.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `sort` | int UNSIGNED | NO | Sorrend |
+| `journey_id` | bigint UNSIGNED | NO | → `journeys.id` |
+| `version` | varchar(125) | NO | Verziójelölés (pl. `v1`, `v2`), alapért.: `v1` |
+| `is_draft` | tinyint(1) | NO | Vázlat (`1`) / publikált (`0`), alapért.: `1` |
+| `metadata` | longtext (JSON) | YES | Tetszőleges metaadatok JSON-ban |
+| `published_at` | timestamp | YES | Publikálás időpontja |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (journey_id, version)`, `(sort)`
+
+### `journey_steps`
+
+Tesztszcenárió lépések **nested set** fával (hierarchikus struktúra). A `path` a teljes breadcrumb-útvonalat tárolja.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `journey_version_id` | bigint UNSIGNED | NO | → `journey_versions.id` |
+| `depth` | smallint UNSIGNED | NO | Mélység a fa-struktúrában |
+| `sort` | int UNSIGNED | NO | Sorrend |
+| `path` | varchar(250) | NO | Teljes szülő-útvonal (breadcrumb) |
+| `_lft` | int UNSIGNED | NO | Nested set bal határ |
+| `_rgt` | int UNSIGNED | NO | Nested set jobb határ |
+| `parent_id` | int UNSIGNED | YES | Szülő lépés azonosítója |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(journey_version_id, sort)`, `(path)`, `(_lft, _rgt, parent_id)`, `(parent_id)`
+
+<Info>
+  A `journey_steps` tábla a `wsmallnews/filament-nestedset` csomag nested set implementációját használja. A `_lft` / `_rgt` mezők a fa-struktúra hatékony lekérdezéséhez szükségesek — ne módosítsd őket kézzel.
+</Info>
+
+### `journey_step_meta`
+
+Lépéshez tartozó kulcs–érték metaadatok (pl. tesztadat-hivatkozások, előfeltételek).
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `journey_step_id` | bigint UNSIGNED | NO | → `journey_steps.id` |
+| `key` | varchar(191) | NO | Metaadat kulcs |
+| `value` | longtext | YES | Metaadat érték |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (journey_step_id, key)`, `(key)`
+
+---
+
+## Teszttervek
+
+### `test_plans`
+
+Teszttervek: journey version halmazok tesztelők hozzárendelésével.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `project_id` | bigint UNSIGNED | NO | → `projects.id` |
+| `name` | varchar(125) | NO | Tesztterv neve |
+| `description` | text | YES | Leírás |
+| `status` | enum(`draft`,`active`,`archived`) | NO | Állapot, alapért.: `draft` |
+| `is_active` | tinyint(1) | NO | Aktív jelző, alapért.: `0` |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(project_id)`
+
+### `test_plan_items`
+
+A tesztterv és a journey version-ök összekapcsolása tesztelő-hozzárendeléssel.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `test_plan_id` | bigint UNSIGNED | NO | → `test_plans.id` |
+| `journey_version_id` | bigint UNSIGNED | NO | → `journey_versions.id` |
+| `execution_order` | int | NO | Végrehajtási sorrend, alapért.: `0` |
+| `status` | enum(`pending`,`in_progress`,`passed`,`failed`) | NO | Állapot, alapért.: `pending` |
+| `assigned_at` | timestamp | YES | Hozzárendelés időpontja |
+| `assigned_to` | bigint UNSIGNED | YES | Hozzárendelt tesztelő (→ `users.id`) |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (test_plan_id, journey_version_id)`, `(journey_version_id)`, `(assigned_to)`
+
+---
+
+## Tesztfuttatások
+
+### `test_runs`
+
+Egy konkrét tesztelési esemény. Egy teszttervhez több futtatás is tartozhat.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `test_plan_id` | bigint UNSIGNED | NO | → `test_plans.id` |
+| `project_id` | bigint UNSIGNED | YES | → `projects.id` (denormalizált) |
+| `started_by` | bigint UNSIGNED | YES | Indító felhasználó (→ `users.id`) |
+| `domain_environment_id` | bigint UNSIGNED | YES | Tesztkörnyezet (→ `domain_environments.id`) |
+| `release_id` | bigint UNSIGNED | YES | Kapcsolódó kiadás (→ `releases.id`) |
+| `name` | varchar(255) | NO | Futtatás neve |
+| `status` | enum(`pending`,`in_progress`,`completed`,`failed`) | NO | Állapot, alapért.: `pending` |
+| `total_time_minutes` | decimal(8,2) | NO | Összesített idő percben, alapért.: `0.00` |
+| `comment` | text | YES | Megjegyzés |
+| `started_at` | timestamp | YES | Futtatás kezdete |
+| `finished_at` | timestamp | YES | Futtatás vége |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(test_plan_id)`, `(project_id)`, `(started_by)`, `(domain_environment_id)`, `(release_id)`
+
+### `test_run_items`
+
+Egy futtatáson belül egy journey version végrehajtásának eredménye.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `test_run_id` | bigint UNSIGNED | NO | → `test_runs.id` |
+| `test_plan_item_id` | bigint UNSIGNED | YES | → `test_plan_items.id` |
+| `journey_version_id` | bigint UNSIGNED | YES | → `journey_versions.id` |
+| `assignee_id` | bigint UNSIGNED | YES | Végrehajtó tesztelő (→ `users.id`) |
+| `result` | enum(`pending`,`passed`,`failed`,`blocked`,`skipped`) | NO | Eredmény, alapért.: `pending` |
+| `time_spent_minutes` | decimal(8,2) | NO | Eltöltött idő percben, alapért.: `0.00` |
+| `comment` | text | YES | Megjegyzés |
+| `executed_at` | timestamp | YES | Végrehajtás időpontja |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(test_run_id)`, `(test_plan_item_id)`, `(journey_version_id)`, `(assignee_id)`
+
+### `test_run_steps`
+
+Lépésszintű végrehajtási eredmények. Platform-hibák és pillanatképek JSON-ban tárolva.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `test_run_item_id` | bigint UNSIGNED | NO | → `test_run_items.id` |
+| `journey_step_id` | bigint UNSIGNED | YES | → `journey_steps.id` |
+| `result` | enum(`pending`,`passed`,`failed`,`blocked`,`skipped`) | NO | Lépés eredménye, alapért.: `pending` |
+| `time_spent_minutes` | decimal(8,2) | NO | Eltöltött idő percben, alapért.: `0.00` |
+| `platform_errors` | longtext (JSON) | YES | Platform hibaüzenetek JSON-ban |
+| `platform_snapshot` | longtext (JSON) | YES | Platform állapot-pillanatkép JSON-ban |
+| `comment` | text | YES | Tesztelő megjegyzése |
+| `evidence_path` | varchar(125) | YES | Bizonyíték fájl elérési útja (storage) |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(test_run_item_id)`, `(journey_step_id)`
+
+### `test_run_issues`
+
+Egy futtatáson belül rögzített hibák/problémák. Kapcsolódhat journey-szinthez vagy konkrét lépéshez.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `test_run_item_id` | bigint UNSIGNED | NO | → `test_run_items.id` |
+| `journey_step_id` | bigint UNSIGNED | YES | → `journey_steps.id` (null = journey-szintű) |
+| `has_journey_level_issue` | tinyint(1) | NO | Journey-szintű hiba jelző, alapért.: `0` |
+| `journey_note_html` | longtext | YES | Journey-szintű HTML megjegyzés |
+| `title` | varchar(125) | NO | Hiba rövid címe |
+| `description` | text | YES | Részletes leírás |
+| `status` | enum(`open`,`in_progress`,`resolved`,`closed`) | NO | Hiba állapota, alapért.: `open` |
+| `reported_by` | bigint UNSIGNED | YES | Bejelentő felhasználó (→ `users.id`) |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(test_run_item_id)`, `(reported_by)`, `(journey_step_id)`
+
+---
+
+## Eszközök és környezetek
+
+### `test_devices`
+
+Teszteléshez használt fizikai vagy virtuális eszközök.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `project_id` | bigint UNSIGNED | NO | → `projects.id` |
+| `name` | varchar(125) | NO | Eszköz megnevezése |
+| `brand` | varchar(125) | YES | Gyártó (pl. Apple, Samsung) |
+| `model` | varchar(125) | YES | Modell (pl. iPhone 15 Pro) |
+| `os` | varchar(125) | YES | Operációs rendszer (pl. iOS, Android) |
+| `os_version` | varchar(125) | YES | OS verzió |
+| `browser` | varchar(125) | YES | Böngésző neve |
+| `browser_version` | varchar(125) | YES | Böngésző verzió |
+| `device_type` | varchar(125) | NO | Típus (`physical`/`virtual`), alapért.: `physical` |
+| `resolution` | varchar(125) | YES | Képernyőfelbontás |
+| `api_source` | varchar(125) | YES | API forrás azonosítója |
+| `meta` | longtext (JSON) | YES | Egyéb metaadatok JSON-ban |
+| `image` | varchar(125) | YES | Eszköz képe (storage path) |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(project_id)`
+
+### `test_device_test_run`
+
+Eszköz–futtatás many-to-many pivot tábla.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `test_run_id` | bigint UNSIGNED | NO | → `test_runs.id` |
+| `test_device_id` | bigint UNSIGNED | NO | → `test_devices.id` |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(test_run_id)`, `(test_device_id)`
+
+### `domain_environments`
+
+Projektenként definiált domain/környezet konfigurációk (pl. staging, production).
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `project_id` | bigint UNSIGNED | NO | → `projects.id` |
+| `name` | varchar(125) | NO | Környezet neve (pl. Staging) |
+| `domain` | varchar(125) | YES | Domain URL |
+| `environment` | varchar(125) | YES | Környezet típusa (pl. staging) |
+| `status` | varchar(125) | NO | Állapot, alapért.: `active` |
+| `description` | text | YES | Leírás |
+| `meta` | longtext (JSON) | YES | Egyéb metaadatok |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(project_id)`
+
+### `releases`
+
+Szoftverkiadások, amelyekhez tesztfuttatások köthetők.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `project_id` | bigint UNSIGNED | NO | → `projects.id` |
+| `name` | varchar(125) | NO | Kiadás neve |
+| `version` | varchar(125) | YES | Verziószám (pl. `1.4.2`) |
+| `status` | varchar(125) | NO | Állapot, alapért.: `active` |
+| `released_at` | date | YES | Kiadás dátuma |
+| `notes` | text | YES | Kiadási megjegyzések |
+| `meta` | longtext (JSON) | YES | Egyéb metaadatok |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(project_id)`
+
+---
+
+## Egyéni mezők
+
+### `custom_fields`
+
+Projekt- és típusspecifikus egyéni mező definíciók. 16 mezőtípust támogat.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `project_id` | bigint UNSIGNED | NO | → `projects.id` |
+| `target_type` | varchar(32) | NO | Célmodell típusa (pl. `journey_version`) |
+| `key` | varchar(150) | NO | Mező kulcsa (programmatic) |
+| `label` | varchar(125) | NO | Megjelenített felirat |
+| `field_type` | enum(16 típus) | NO | Mező típusa, alapért.: `text` |
+| `options` | longtext (JSON) | YES | Select/multiselect lehetőségek JSON-ban |
+| `default` | longtext (JSON) | YES | Alapértelmezett érték JSON-ban |
+| `required` | tinyint(1) | NO | Kötelező mező, alapért.: `0` |
+| `rules` | varchar(125) | YES | Laravel validációs szabályok |
+| `help` | text | YES | Súgó szöveg |
+| `sort` | int UNSIGNED | NO | Megjelenítési sorrend, alapért.: `0` |
+| `active` | tinyint(1) | NO | Aktív-e, alapért.: `1` |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Támogatott `field_type` értékek:** `text`, `textarea`, `number`, `bool`, `select`, `multiselect`, `json`, `date`, `datetime`, `keyvalue`, `url`, `color`, `file`, `image`, `files`, `images`
+
+**Indexek:** `UNIQUE (project_id, target_type, key)`, `(project_id, target_type, active, sort)`
+
+### `custom_values`
+
+Egyéni mező értékek típusonként szétválasztott oszlopokban tárolva.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `project_id` | bigint UNSIGNED | NO | → `projects.id` |
+| `target_type` | varchar(32) | NO | Célmodell típusa |
+| `target_id` | bigint UNSIGNED | NO | Célmodell azonosítója |
+| `custom_field_id` | bigint UNSIGNED | NO | → `custom_fields.id` |
+| `value_text` | text | YES | Szöveges érték |
+| `value_json` | longtext | YES | JSON érték |
+| `value_number` | decimal(20,6) | YES | Numerikus érték |
+| `value_bool` | tinyint(1) | YES | Boolean érték |
+| `value_date` | date | YES | Dátum érték |
+| `value_datetime` | datetime | YES | Dátum\+idő érték |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (project_id, target_type, target_id, custom_field_id)`, `(custom_field_id)`, `(project_id, target_type, target_id)`
+
+---
+
+## Eseménysémák (Analytics)
+
+### `event_schemas`
+
+Analitikai esemény definíciók projektenkénti gyűjteménye.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `project_id` | bigint UNSIGNED | NO | → `projects.id` |
+| `name` | varchar(125) | NO | Esemény technikai neve |
+| `label` | varchar(125) | NO | Megjelenített felirat |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(project_id, name)`
+
+### `event_schema_keys`
+
+Eseménysémák kulcsainak definíciói platformonkénti szűréssel.
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `event_schema_id` | bigint UNSIGNED | NO | → `event_schemas.id` |
+| `key` | varchar(125) | NO | Kulcs neve |
+| `applies_to` | enum(`all`,`android`,`ios`,`web`) | NO | Platform hatókör, alapért.: `all` |
+| `required` | tinyint(1) | NO | Kötelező-e, alapért.: `0` |
+| `type` | varchar(125) | NO | Adattípus (pl. `string`, `number`), alapért.: `string` |
+| `sort` | int UNSIGNED | NO | Sorrend, alapért.: `0` |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `UNIQUE (event_schema_id, key, applies_to)`, `(event_schema_id, sort)`, `(event_schema_id, key)`
+
+---
+
+## Integrációk
+
+### `issue_trackers`
+
+Projektenként konfigurált issue tracker integrációk (Jira, Redmine).
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `project_id` | bigint UNSIGNED | NO | → `projects.id` |
+| `type` | varchar(32) | NO | Tracker típusa (`jira`, `redmine`) |
+| `name` | varchar(125) | YES | Integráció neve |
+| `is_active` | tinyint(1) | NO | Aktív-e, alapért.: `1` |
+| `config` | longtext (JSON) | NO | Kapcsolati konfiguráció JSON-ban (URL, token, stb.) |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(project_id, type)`
+
+### `figma_settings`
+
+Globális Figma API konfiguráció (egyetlen sor, rendszerszintű).
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `api_token` | text | YES | Figma Personal Access Token |
+| `enable_buttons` | tinyint(1) | NO | Figma gombok megjelenítése, alapért.: `1` |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+---
+
+## Napló és rendszer
+
+### `activity_log`
+
+Spatie Activity Log — minden kritikus művelet naplózva kerül ide. Polimorf (`subject`, `causer`).
+
+| Oszlop | Típus | Null | Leírás |
+| --- | --- | --- | --- |
+| `id` | bigint UNSIGNED AI | NO | Elsődleges kulcs |
+| `log_name` | varchar(125) | YES | Log csatorna neve |
+| `description` | text | NO | Esemény leírása |
+| `subject_type` | varchar(125) | YES | Érintett modell típusa |
+| `subject_id` | bigint UNSIGNED | YES | Érintett modell azonosítója |
+| `event` | varchar(125) | YES | Esemény típusa (pl. `created`, `updated`) |
+| `causer_type` | varchar(125) | YES | Okozó modell típusa |
+| `causer_id` | bigint UNSIGNED | YES | Okozó modell azonosítója (általában user) |
+| `properties` | longtext (JSON) | YES | Változtatások részletei JSON-ban |
+| `batch_uuid` | char(36) | YES | Batch UUID csoportos naplózáshoz |
+| `created_at` / `updated_at` | timestamp | YES | Időbélyegek |
+
+**Indexek:** `(subject_type, subject_id)`, `(causer_type, causer_id)`, `(log_name)`
+
+### Laravel rendszertáblák
+
+| Tábla | Leírás |
+| --- | --- |
+| `migrations` | Lefutott migrációk nyilvántartása |
+| `jobs` | Aktív queue job-ok (queue, payload, attempts, timestamps) |
+| `job_batches` | Queue job batch-ek (total/pending/failed számlálókkal) |
+| `failed_jobs` | Sikertelen job-ok naplója (uuid, connection, queue, payload, exception) |
+| `cache` | DB-alapú cache store (key, value, expiration) |
+| `cache_locks` | DB-alapú cache zárak (key, owner, expiration) |
+
+---
+
+## Kapcsolatok áttekintése
+
+```text
+projects
+  ├── modules (project_id)
+  │     └── journeys (module_id)
+  │           └── journey_versions (journey_id)
+  │                 └── journey_steps (journey_version_id) [nested set]
+  │                       └── journey_step_meta (journey_step_id)
+  ├── test_plans (project_id)
+  │     ├── test_plan_items (test_plan_id) → journey_versions
+  │     │         └── assigned_to → users
+  │     └── test_runs (test_plan_id)
+  │           ├── test_run_items (test_run_id) → journey_versions
+  │           │     ├── test_run_steps (test_run_item_id) → journey_steps
+  │           │     └── test_run_issues (test_run_item_id) → journey_steps
+  │           ├── domain_environment_id → domain_environments
+  │           └── release_id → releases
+  ├── domain_environments (project_id)
+  ├── releases (project_id)
+  ├── custom_fields (project_id)
+  │     └── custom_values (custom_field_id, target_type, target_id)
+  ├── event_schemas (project_id)
+  │     └── event_schema_keys (event_schema_id)
+  ├── issue_trackers (project_id)
+  └── test_devices (project_id)
+        └── test_device_test_run → test_runs
+
+users
+  ├── model_has_roles → roles → role_has_permissions → permissions
+  ├── model_has_permissions → permissions
+  ├── default_project_id → projects
+  └── sessions (user_id)
+
+figma_settings  (globális, projekttől független)
+activity_log    (polimorf subject + causer)
+```
+
+---
+
+## Adatbázisra vonatkozó követelmények
+
+### Szerver és verzió
+
+| Követelmény | Érték |
+| --- | --- |
+| Ajánlott motor | **InnoDB** (tranzakciók, FK, crash recovery) |
+| Jelenlegi motor | MyISAM (fejlesztési dump) |
+| Minimális verzió (éles) | MySQL 8.0\+ |
+| Fejlesztési verzió | MySQL 9.1.0 |
+| Karakterkészlet | `utf8mb4` |
+| Collation | `utf8mb4_unicode_ci` |
+| Időzóna | UTC (`+00:00`) |
+
+<Warning>
+  Az összes tábla átállítása InnoDB motorra éles telepítés előtt **kötelező**. A MyISAM nem támogat tranzakciókat és idegen kulcsokat — egy sikertelen adatbázis-művelet részleges adatkárosodást okozhat. Az átállítandó táblák listájához futtasd:
+
+  ```sql
+  SELECT CONCAT('ALTER TABLE `', TABLE_NAME, '` ENGINE=InnoDB;')
+  FROM information_schema.TABLES
+  WHERE TABLE_SCHEMA = 'analyse' AND ENGINE = 'MyISAM';
+  ```
+</Warning>
+
+### InnoDB konfiguráció
+
+```ini
+# /etc/mysql/mysql.conf.d/mysqld.cnf
+[mysqld]
+default_storage_engine        = InnoDB
+innodb_buffer_pool_size       = 8G        # RAM 50-70%-a (pl. 16 GB RAM esetén)
+innodb_buffer_pool_instances  = 4         # buffer_pool_size / 1 GB
+innodb_log_file_size          = 512M
+innodb_flush_log_at_trx_commit = 1        # ACID megfelelés
+sync_binlog                   = 1         # Replikáció esetén
+character_set_server          = utf8mb4
+collation_server              = utf8mb4_unicode_ci
+```
+
+### JSON oszlopok
+
+A következő oszlopok JSON adatot tárolnak `longtext` típusban. Éles MySQL 8.0\+-on átállíthatók natív `JSON` típusra a jobb validáció és lekérdezhetőség érdekében:
+
+| Tábla | Oszlop | Tartalom |
+| --- | --- | --- |
+| `activity_log` | `properties` | Változtatások old/new értékei |
+| `custom_fields` | `options`, `default` | Mező opciók és alapértelmezések |
+| `custom_values` | `value_json` | JSON típusú egyéni értékek |
+| `domain_environments` | `meta` | Egyéb metaadatok |
+| `issue_trackers` | `config` | Tracker kapcsolati adatok |
+| `journey_versions` | `metadata` | Verzió metaadatok |
+| `releases` | `meta` | Kiadás metaadatok |
+| `test_devices` | `meta` | Eszköz metaadatok |
+| `test_run_steps` | `platform_errors`, `platform_snapshot` | Platform hibák és pillanatképek |
+
+### Becsült növekedés
+
+| Tábla | Sor/év becslés | Megjegyzés |
+| --- | --- | --- |
+| `test_run_steps` | ~500 000\+ | Lépésszintű eredmény, a legnagyobb tábla |
+| `test_run_items` | ~50 000\+ | Futtatásonként N journey version |
+| `activity_log` | ~200 000\+ | Minden szerkesztési művelet naplózva |
+| `custom_values` | ~100 000\+ | Egyéni mezők × rekordok száma |
+| Többi tábla | \< 10 000 | Relatív kis méret |
+
+### Mentési stratégia
+
+- **Napi teljes mentés:** `mysqldump --single-transaction --routines --triggers analyse > backup_$(date +%F).sql`
+- **Növekményes mentés:** Percona XtraBackup (InnoDB bináris szintű)
+- **Binlog:** `binlog_format=ROW` ajánlott replikációhoz és PITR-hez
+- **Megőrzési idő:** Minimum 30 nap helyi \+ offsite
+- **Tesztelés:** Havi mentés-visszaállítási teszt külön szerveren

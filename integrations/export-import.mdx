@@ -1,0 +1,116 @@
+---
+title: "Folyamat jelentések exportálása és tesztlépések importálása tömegesen"
+description: "PDF vagy Excel jelentések letöltése bármely journey (folyamat) verzióhoz."
+---
+
+Az Analyse három exportformátumot kínál minden journey verzióhoz — egy PDF-jelentést, egy Excel-jelentést és egy üres lépéssablont —, valamint egy importálási végpontot, amely lehetővé teszi, hogy egy kitöltött sablonból töltsd fel egy journey verzió lépéseit. Minden végpont bejelentkezést igényel.
+
+<Tip>
+  A leggyorsabb módja egy nagy lépéskészlet összeállításának az, ha letöltöd az üres sablont, offline kitöltöd, majd feltöltöd. A PDF és Excel jelentések az érdekelt felekkel való megosztásra a legalkalmasabbak.
+</Tip>
+
+## PDF-jelentés exportálása
+
+A PDF-jelentés tartalmazza a journey verzió és összes lépésének teljes összefoglalóját.
+
+```text
+GET /exports/journey-versions/{id}/report.pdf
+```
+
+Cseréld le `{id}`-t a journey verzió numerikus azonosítójára. A válasz egy letölthető PDF fájl.
+
+## Excel-jelentés exportálása
+
+Az Excel-jelentés ugyanazokat az adatokat tartalmazza, mint a PDF, de strukturált `.xlsx` formátumban, két lappal: egy áttekintőlappal és egy lépéslappal.
+
+```text
+GET /exports/journey-versions/{id}/report.xlsx
+```
+
+Cseréld le `{id}`-t a journey verzió numerikus azonosítójára. A válasz egy letölthető `.xlsx` fájl.
+
+## A lépéssablon letöltése
+
+A lépéssablon egy üres `.xlsx` fájl, amelyet előre formáztak a tömeges lépésimporthoz. Két lapot tartalmaz:
+
+- **1\_README** — útmutató a sablon kitöltéséhez.
+- **2\_SKELETON** — az adatlap oszlopfejlécekkel és egy példasorral.
+
+```text
+GET /exports/journey-versions/{id}/steps-template.xlsx
+```
+
+Cseréld le `{id}`-t annak a journey verziónak a numerikus azonosítójára, amelybe importálni szeretnél.
+
+## Sablon oszlop referencia
+
+Töltsd ki a **2\_SKELETON** lapot. Minden sor egy lépést képvisel.
+
+| Oszlop | Kötelező | Leírás |
+| --- | --- | --- |
+| **Definíció** | Igen | Lépésdefiníció — a lépés fő leírása |
+| **Event** | Nem | Eseménynév (pl. `button_tap`, `page_view`) |
+| **Android** | Nem | Android analitikai tartalom JSON formátumban (pl. `{"event_id":"login_screen"}`) vagy `kulcs: érték` sorokként |
+| **iOS** | Nem | iOS analitikai tartalom ugyanolyan formátumban, mint az Android |
+| **Figma** | Nem | Teljes Figma keret URL a terv csatolásához ehhez a lépéshez |
+| **Megjegyzés** | Nem | Szabad szöveges megjegyzés a lépéshez |
+| **Depth** | Igen | Egész szám hierarchiaszint: `0` = gyökér, `1` = gyermek, `2` = unoka, és így tovább |
+
+<Note>
+  A **Definíció** oszlop az egyetlen kötelező adatoszlop. Az üres **Definíció**-val rendelkező sorok importálás során csendben kihagyásra kerülnek. A **Depth** oszlop alapértelmezés szerint `0`, ha kihagyod.
+</Note>
+
+### Hierarchia beállítása a Depth segítségével
+
+A lépések szülő-gyermek fában vannak elrendezve a **Depth** értékkel kombinált sorsorrendtől függően. A `Depth: 1` értékű lépés a legközelebbi megelőző `Depth: 0` értékű lépés gyermekévé válik.
+
+```text
+1. sor — Depth 0 → gyökérlépés
+2. sor — Depth 1 → az 1. sor gyermeke
+3. sor — Depth 2 → a 2. sor gyermeke
+4. sor — Depth 1 → az 1. sor gyermeke (a 2. sor testvére)
+5. sor — Depth 0 → új gyökérlépés
+```
+
+### Android és iOS JSON formátum
+
+Az analitikai adatokat JSON objektumként vagy egyszerű `kulcs: érték` szövegként is megadhatod. Mindkettő elfogadott:
+
+<CodeGroup>
+
+```json JSON formátum
+{"event_id": "login_screen", "button_text": "Sign in"}
+```
+
+```text Kulcs-érték formátum
+event_id: login_screen
+button_text: Sign in
+```
+
+</CodeGroup>
+
+## Lépések importálása Excelből
+
+Miután kitöltötted a sablont, töltsd fel a journey verzió lépéseinek feltöltéséhez.
+
+```text
+POST /imports/journey-versions/{id}/steps
+```
+
+Cseréld le `{id}`-t a cél journey verzió numerikus azonosítójára. Küld a fájlt multipart form feltöltésként.
+
+<Steps>
+  <Step title="A sablon letöltése">
+    Használd a **Lépéssablon letöltése** gombot a journey verzió oldalán, vagy hívd meg a `GET /exports/journey-versions/{id}/steps-template.xlsx` végpontot.
+  </Step>
+  <Step title="A 2_SKELETON lap kitöltése">
+    Add meg a lépéseidet a **2\_SKELETON** lapon. Ne nevezd át a lapot vagy az oszlopokat — az importáló oszlopfejléc szerint illeszt.
+  </Step>
+  <Step title="A fájl feltöltése">
+    A journey verzió oldalán kattints a **Lépések importálása** gombra, és válaszd ki a kitöltött fájlt, vagy POST-old a fájlt a `/imports/journey-versions/{id}/steps` végpontra.
+  </Step>
+</Steps>
+
+<Warning>
+  Az importálás új lépéseket ad hozzá a journey verzióhoz — nem cseréli le a meglévőket. Ha tiszta lappal szeretnéd kezdeni, töröld a meglévő lépéseket az importálás előtt.
+</Warning>

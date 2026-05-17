@@ -1,0 +1,185 @@
+---
+title: "Kulcs elemek: hierarchia, teszttervek és futtatások."
+description: '„Ismerd meg, hogyan illeszkedik egymáshoz a Projektek, Modulok, Journey-k, Journey Verziók, Lépések, Teszttervek, Tesztfuttatások és Kiadások rendszere, mielőtt elkezdesz építeni az Analyse-ban."'
+---
+
+Az Analyse struktúrájának megértésével sokkal könnyebb rendezni a tesztelési lefedettségedet és értelmezni az eredményeket. Minden tartalom, amelyet létrehozol, a következő hierarchiában helyezkedik el:
+
+```text
+Projekt
+└── Modul
+    └── Journey
+        └── Journey Verzió
+            └── Journey Lépés
+```
+
+A Teszttervek és Tesztfuttatások erre a struktúrára épülnek — Journey Verziókat hivatkoznak anélkül, hogy módosítanák azokat. A Kiadások lehetővé teszik, hogy a tesztbizonyítékokat egy adott telepítéshez kösd.
+
+---
+
+## Projekt
+
+A **Projekt** a legfelső szintű tároló az Analyse-ban. Egy terméket, alkalmazást vagy tesztelési tartományt képvisel. Minden más — modulok, journey-k, teszttervek és futtatások — egy projekten belül helyezkedik el.
+
+Minden projektnek van egy egyedi **kulcsa** (automatikusan generálódik a névből), amelyet a platform egészén az azonosítására használnak. Egy projektnek több aktív integrációja lehet: hibakövető rendszerek (Jira vagy Redmine) és projektenként konfigurált eseménysémák.
+
+<Tip>
+  Hozz létre egy projektet termékenkénti vagy fő alkalmazásonkénti szinten. Ha a szervezetednek külön webes és mobilos alkalmazása van eltérő tesztelési lefedettséggel, fontold meg külön projektek létrehozását mindkettőhöz.
+</Tip>
+
+---
+
+## Modul
+
+A **Modul** egy projekt funkcionális területe vagy komponense. A modulok a projekten belüli szervezés első szintjét képviselik, és jellemzően terméktulajdonságokhoz, alkalmazásszakaszokhoz vagy csapatokhoz köthetők.
+
+**Példák:** Hitelesítés, Bevásárlókosár, Keresés, Felhasználói profil, API, Mobil pénztár.
+
+A modulok **Journey-ket** tartalmaznak. Egy projekten belül annyi modult hozhatsz létre, amennyi szükséges.
+
+---
+
+## Journey
+
+Egy **Journey** egyetlen felhasználói folyamatot vagy tesztforgatókönyvet képvisel egy modulon belül. Ez a logikai tároló azon lépések sorrendjéhez, amelyeket egy felhasználó (vagy tesztelő) követ a termékedben.
+
+Magát a journey-t nem hajtod végre — mindig egy journey adott **verzióját** hajtod végre. Ez az elkülönítés lehetővé teszi, hogy ugyanazon folyamat több iterációját egymás mellett tartsd fenn.
+
+**Példák:** „Felhasználó regisztrál e-mail-címmel", „Vendég terméket ad a kosárhoz", „Adminisztrátor exportál egy jelentést".
+
+A Journey-k opcionálisan támogatnak egy **Almodul** címkét, ha finomabb csoportosítási szintet szeretnél a modulon belül.
+
+---
+
+## Journey verzió
+
+A **Journey Verzió** egy journey tesztesetének egy adott, számozott revíziója. Ez az az egység, amely bekerül egy teszttervbe és végrehajtásra kerül egy tesztfuttatásban.
+
+### Vázlat vs. közzétett
+
+Minden journey verziónak két állapota lehet:
+
+| Állapot | Jelentés |
+| --- | --- |
+| **Vázlat** | Folyamatban lévő munka. A verzió még nem áll készen tesztelésre, és nem adható hozzá teszttervhez. |
+| **Közzétett** | Kész tesztelésre. A verzió kiválasztható a Tesztterv-készítőben és tesztfuttatásba foglalható. |
+
+A verziót csak akkor állítsd **Közzétettre** (a Vázlat kapcsoló kikapcsolásával), ha a lépései teljesek és felülvizsgáltak.
+
+<Note>
+  Ugyanazon journey több verzióját is fenntarthatod egyszerre — például egy jelenleg használt közzétett `v1.0`-t és egy közelgő kiadáshoz frissített `v2.0` vázlatot.
+</Note>
+
+---
+
+## Journey lépés
+
+A **Journey Lépés** egy egyedi művelet vagy ellenőrzés egy journey verzión belül. A lépések meghatározzák, mit kell tennie a tesztelőnek, és mi a várt eredmény.
+
+Minden lépés tartalmazza:
+
+- **Definíció** — a művelet vagy előfeltétel (például: „Navigálj a bejelentkezési oldalra, és add meg az érvényes hitelesítő adatokat")
+- **Eseménynév** — a művelet által kiváltott várt esemény vagy eredmény
+- **Megjegyzés** — opcionális szabad szöveges megjegyzés a tesztelőnek
+- **Figma-link** — opcionális hivatkozás a releváns Figma kerethez tervhivatkozás céljából
+- **Platformmezők** — opcionális megjegyzések a lépés webes, iOS és Android változataihoz
+
+A lépések hierarchikus (beágyazott) struktúrát támogatnak, így csoportokba és alcsoportokba rendezhetők egy verzión belül.
+
+<Tip>
+  Lépéseket tömegesen is importálhatsz Excel-táblázatból a journey verzión elérhető **Importálás** művelettel. Ez hasznos, ha egy meglévő táblázatból migrálod a teszteseteket az Analyse-ba.
+</Tip>
+
+---
+
+## Tesztterv
+
+A **Tesztterv** egy elnevezett gyűjtemény azokból a journey verziókból, amelyeket egy adott ciklusban együtt szeretnél tesztelni. Egy projekthez tartozik, és **aktívnak** jelölhető — az aktív terv az alapértelmezett kijelölés a Tesztterv-készítőben.
+
+A **Tesztterv-készítő** a terv tartalmának kezelésére szolgáló felület. A készítőből lehetséges:
+
+- A projekttfa böngészése és egyéni journey verziók kiválasztása
+- Verziók hozzáadása vagy eltávolítása a tervből egyetlen kattintással
+- Minden tervelem hozzárendelése egy adott csapattaghoz
+- A terv mentése és e-mail-értesítések küldése a hozzárendelt tesztelőknek
+
+Minden tervelem tárolja a hozzárendelt tesztelőt és a végrehajtási sorrendet. Egy journey verzió több tervben is szerepelhet, különböző ciklusokban.
+
+---
+
+## Tesztfuttatás
+
+A **Tesztfuttatás** egy tesztterv egyszeri végrehajtása egy adott időpontban. Egy teszttervből hozod létre, opcionálisan egy környezethez és egy kiadáshoz kapcsolva.
+
+A futtatás **tesztfuttatási elemeket** tartalmaz — egyet a tervben szereplő minden journey verzióhoz. Minden elemet a **Tesztfuttató** hajtja végre, ahol a tesztelő végigmegy minden journey lépésen és rögzíti az eredményt.
+
+### Tesztfuttatási elem eredményei
+
+| Eredmény | Jelentés |
+| --- | --- |
+| **Sikeres** | Az összes lépés helyesen futott le; a journey verzió az elvárásoknak megfelelően viselkedik. |
+| **Sikertelen** | Legalább egy lépés nem az elvárásoknak megfelelően viselkedett. |
+| **Blokkolt** | A tesztelő nem tudta végrehajtani az elemet külső függőség vagy környezeti probléma miatt. |
+| **Kihagyott** | Az elem szándékosan nem lett végrehajtva ebben a futtatásban. |
+
+Az összesített **futtatási státusz** az egyéni elemek eredményeiből adódik:
+
+- Ha bármelyik elem **sikertelen** → a futtatás `sikertelen`
+- Ha bármelyik elem **blokkolt** (és egyik sem sikertelen) → a futtatás `blokkolt`
+- Ha az összes elem **sikeres** → a futtatás `sikeres`
+- Egyébként → a futtatás `függőben`
+
+A futtatások nyomon követik az **eltöltött időt** elemenként, és támogatják a lépésenkénti megjegyzéseket és hibahivatkozásokat (Jira vagy Redmine) sikertelen lépéseknél.
+
+---
+
+## Kiadás
+
+A **Kiadás** egy projekt szoftververziójának vagy telepítési mérföldkövének felel meg. Egy tesztfuttatás kiadáshoz csatolása nyomon követhető nyilvántartást hoz létre arról, mi lett tesztelve az adott kiadás előtt.
+
+Minden kiadás rendelkezik:
+
+- **Névvel** és opcionális **verziósztringgel**
+- **Státusszal** (például: közelgő, kiadva)
+- **Kiadási dátummal**
+- **Megjegyzésekkel**
+
+Egyetlen kiadáshoz több tesztfuttatás is csatolható — például egy regressziós futtatás és egy füstpróba futtatás ugyanahhoz a telepítéshez.
+
+---
+
+## Hogyan illeszkedik össze minden
+
+<AccordionGroup>
+  <Accordion title="A tartalomkészítéstől a tesztvégrehajtásig">
+    **Projekteket** hozol létre **Modulokkal** és **Journey-kkel**. Minden journey-hez egy vagy több **Journey Verziót** írasz **Lépésekkel**. Amikor egy verzió közzé van téve, hozzáadod a **Teszttervhez** a Tesztterv-készítőn keresztül. Majd **Tesztfuttatást** hozol létre a tervből, és végrehajtod a **Tesztfuttatóban**, minden verzióhoz eredményt rögzítve. A futtatás **Kiadáshoz** kapcsolható a nyomon követhetőség érdekében.
+  </Accordion>
+
+  <Accordion title="Verziókezelés és vázlatok">
+    A journey verziók szétválasztják a teszteset-tartalmakat a végrehajtási nyilvántartástól. Frissítheted egy journey lépéseit egy új vázlatverzióban anélkül, hogy ez hatással lenne a korábbi közzétett verziókkal szemben már elvégzett futtatásokra. Ez lehetővé teszi a tesztesetek fejlesztését a termék változásával együtt, miközben a korábbi futtatások adatai érintetlenek maradnak.
+  </Accordion>
+
+  <Accordion title="Hozzárendelés és együttműködés">
+    A tesztterv elemei különböző csapattagokhoz rendelhetők. Amikor hozzárendelésekkel mentesz egy teszttervet, az Analyse minden hozzárendelt tesztelőnek küld egy e-mailt, amely felsorolja a nekik kiosztott teszteseteket. Egy tesztfuttatás során minden tesztelő önállóan dolgozza fel a hozzárendelt elemeit a Tesztfuttatóban.
+  </Accordion>
+
+  <Accordion title="Integrációk és metaadatok">
+    A projektek csatlakozhatnak **Jira**-hoz vagy **Redmine**-hoz hibakövető rendszerként — a tesztelők közvetlenül egy sikertelen tesztfuttatási lépésből naplózhatnak hibát. Az egyes lépések **Figma** keretekhez kapcsolhatók tervhivatkozás céljából. **Egyéni mezők** csatolhatók az entitásokhoz a platformon, hogy rögzítsd a csapatnak szükséges bármilyen további metaadatot.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Gyors referencia
+
+| Fogalom | Egysoros definíció |
+| --- | --- |
+| Projekt | Legfelső szintű tároló, amely egy terméket vagy alkalmazást képvisel |
+| Modul | Funkcionális terület vagy komponens egy projekten belül |
+| Journey | Egy elnevezett felhasználói folyamat vagy tesztforgatókönyv egy modulon belül |
+| Journey Verzió | Egy journey számozott, verziózott tesztesete (vázlat vagy közzétett) |
+| Journey Lépés | Egyetlen művelet/ellenőrzés egy journey verzión belül |
+| Tesztterv | Journey verziók gyűjteménye, amelyek egy tesztelési ciklushoz vannak kiválasztva |
+| Tesztfuttatás | Egy tesztterv egyszeri, időbélyeggel ellátott végrehajtása |
+| Tesztfuttatási elem | Egyetlen journey verzió eredményrekordja egy tesztfuttatáson belül |
+| Kiadás | Szoftververziós mérföldkő; tesztfuttatások csatolhatók hozzá |

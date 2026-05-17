@@ -1,0 +1,100 @@
+---
+title: "Tesztfuttatási eredmények beolvasása és exportálása egy tesztciklus után"
+description: "Ismerd meg az eredmények összesítéseit, a folyamatjelzőket, valamint a PDF vagy Excel formátumú jelentések exportálásának módját. Tanuld meg, hogyan hasonlíthatod össze a futtatásokat a különböző verziók között, és hogyan avatkozhatsz közbe a hibák esetén.     "
+---
+
+Miután a csapatod befejez egy tesztfuttatást, az Analyse teljes összefoglalót jelenít meg arról, mi volt sikeres, sikertelen, blokkolt és kihagyott. Ezt az összefoglalót felhasználhatod a minőség értékelésére, az eredmények közlésére az érdekelt felekkel, és annak eldöntésére, hogy a kiadás készen áll-e a folytatásra.
+
+## Az eredmény-összefoglaló olvasása
+
+Egy befejezett futtatás eredmény nézete az elemszámokat eredmény szerint bontja le:
+
+| Eredmény | Leírás |
+| --- | --- |
+| **Sikeres** | Elemek, amelyekben az összes lépés a várt eredménnyel zárult |
+| **Sikertelen** | Elemek, amelyekben legalább egy lépés váratlan eredményt produkált |
+| **Blokkolt** | Elemek, amelyek egy függőség vagy környezeti probléma miatt nem hajthatók végre |
+| **Kihagyott** | Az adott futtatásból szándékosan kizárt elemek |
+| **Érvénytelen** | Elemek, amelyek a leírtak szerint nem értékelhetők |
+
+Az **előrehaladás százalékos értéke** megmutatja, hogy az elemek hány százaléka kapott lezáró eredményt a teljesből. A 100%-os futtatás azt jelenti, hogy minden elemet értékeltek — nem azt, hogy az összes sikeres volt.
+
+Az összesített **futtatási státusz** az elemek eredményeiből számítódik:
+
+- **Sikertelen** — ha bármelyik elem sikertelen
+- **Blokkolt** — ha egyetlen elem sem volt sikertelen, de legalább egy blokkolt
+- **Sikeres** — ha minden elem sikeres
+- **Függőben** — ha néhány elemet még nem értékeltek
+
+## Eredmények exportálása
+
+Egyéni teszteset (journey verzió) eredményeit PDF vagy Excel fájlként exportálhatod az érdekelt felekkel való megosztáshoz vagy archiváláshoz.
+
+<CardGroup cols={2}>
+  <Card title="Exportálás PDF-ként" icon="file-pdf" href="/integrations/export-import">
+    Töltsd le egy journey verzió lépéseinek és eredményének formázott jelentését.
+
+    `GET /exports/journey-versions/{id}/report.pdf`
+  </Card>
+
+  <Card title="Exportálás Excelként" icon="file-excel" href="/integrations/export-import">
+    Töltsd le egy journey verzió lépéseinek és eredményének táblázatát.
+
+    `GET /exports/journey-versions/{id}/report.xlsx`
+  </Card>
+</CardGroup>
+
+<Note>
+  Az exportálási hivatkozások hitelesítést igényelnek. Nyisd meg az URL-t a böngészőben, miközben be vagy jelentkezve az Analyse-ba, vagy használj munkamenet-sütit a HTTP kliensnél.
+</Note>
+
+## Futtatások összehasonlítása kiadások között
+
+Mivel egy teszttervnek sok futtatása lehet, összehasonlíthatod az eredményeket különböző kiadások vagy környezetek között. Navigálj a teszttervhez, és nyisd meg a **Tesztfuttatások** listát, hogy meglásd az adott tervhez tartozó összes futtatást.
+
+A listában minden futtatás megjeleníti nevét, státuszát, a kapcsolt kiadást, a környezetet, az eszközöket, a kezdési és befejezési időpontokat, valamint az előrehaladást. A kiadás szerinti rendezés lehetővé teszi a regressziók észlelését — olyan tesztesetek, amelyek egy korábbi kiadásban sikeresek voltak, de egy újabban sikertelenné váltak.
+
+<Tip>
+  Minden futtatást kapcsolj egy kiadáshoz a létrehozásakor. Ez szűrhetővé teszi a futtatások listáját, és rendezetten tartja a minőségi előzményeket.
+</Tip>
+
+## Reagálás sikertelenségekre
+
+Amikor elemek sikertelenné válnak, a következő lépés az alapvető ok megértése és a javítás nyomon követése.
+
+<Steps>
+  <Step title="A sikertelen elemek áttekintése">
+    Nyisd meg a futtatást, és szűrj a **Sikertelen** elemekre. Olvasd el a tesztelő által minden sikertelen elemhez hagyott megjegyzéseket, hogy megértsd, mi ment rosszul.
+  </Step>
+  <Step title="Hibák naplózása a hibakövető rendszerben">
+    Ha a projektedhez van Jira vagy Redmine integráció, hozz létre jegyeket a sikertelen elemekből közvetlenül az Analyse-ban. Minden jegy visszakapcsolódik a tesztesethez és a futtatáshoz.
+
+    A beállítási utasításokért lásd: [Hibakövető rendszer integrációk](/integrations/issue-trackers).
+  </Step>
+  <Step title="Újrafuttatás a javítások telepítése után">
+    Amint a javítások elérhetők a tesztkörnyezetedben, indíts új tesztfuttatást ugyanazon a terven. Használd ugyanazt a kiadást, vagy hozz létre egy újat a frissített állapot nyomon követéséhez.
+  </Step>
+  <Step title="Összehasonlítás az előző futtatással">
+    Ellenőrizd, hogy a korábban sikertelen elemek most sikeresek-e. Keress regressziókat — újonnan sikertelen elemeket, amelyek korábban sikeresek voltak.
+  </Step>
+</Steps>
+
+## Kapcsolódó oldalak
+
+<CardGroup cols={2}>
+  <Card title="Tesztfuttatás áttekintése" icon="circle-info" href="/test-runs/overview">
+    Ismerd meg a futtatási státuszokat, az elemeredményeket és az előrehaladás kiszámítását.
+  </Card>
+
+  <Card title="Tesztek futtatása" icon="play" href="/test-runs/running">
+    Lépj végig a Tesztfuttatón, és rögzítsd az eredményeket minden tesztesethez.
+  </Card>
+
+  <Card title="Hibakövető rendszer integrációk" icon="bug" href="/integrations/issue-trackers">
+    Csatlakoztasd a Jirát vagy a Redmine-t, hogy naplózz hibákat sikertelen tesztelemekből.
+  </Card>
+
+  <Card title="Export és import" icon="arrow-up-from-bracket" href="/integrations/export-import">
+    Exportálj tesztadatokat és jelentéseket PDF vagy Excel formátumban.
+  </Card>
+</CardGroup>

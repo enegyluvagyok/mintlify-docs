@@ -1,0 +1,259 @@
+---
+title: "Architektúraterv"
+description: "Az Analyse platform magasszintű architektúrájának leírása: technológiai verem, komponenskapcsolatok és tervezési döntések."
+---
+
+Az architektúraterv az Analyse platform teljes rendszertervezési képét adja meg — a technológiai választásoktól a skálázási szempontokon át a biztonsági elvekig.
+
+## Áttekintés
+
+Az Analyse egy webalapú, Laravel \+ Livewire alapú QA-menedzsment platform, szerver-oldali renderelt UI-jal és MySQL adatbázissal. A tervezés során az alábbi szempontok kaptak prioritást:
+
+- **Megbízhatóság** — Redundáns infrastruktúra, automatikus feladatátvétel
+- **Biztonság** — Szerepkör-alapú hozzáférés, titkosítás, auditnapló
+- **Karbantarthatóság** — Moduláris kódbázis, API-first szemlélet
+- **Skálázhatóság** — Vízszintes skálázás támogatása a stateless alkalmazásrétegben
+
+## Technológiai verem
+
+| Réteg | Technológia | Megjegyzés |
+| --- | --- | --- |
+| Frontend | Laravel Livewire 3 \+ Blade | Reaktív UI, szerver-oldali renderelés, Alpine.js |
+| Admin panel | Filament 4 | Adminisztrátori felület, CRUD, jogosultságkezelés |
+| Backend | Laravel 12 (PHP 8.2\+) | MVC keretrendszer, Eloquent ORM, Artisan CLI |
+| Alkalmazásszerver | Laravel Octane 2 (Swoole) | Nagy teljesítményű PHP app szerver, persistent workers |
+| WebSocket / broadcast | Laravel Reverb 1.6 | Valós idejű értesítések, önhosztolt WebSocket szerver |
+| Hitelesítés | Laravel Sanctum 4 | Session-alapú auth \+ API token támogatás |
+| Jogosultságkezelés | Spatie Laravel Permission 6 | RBAC szerepkörök és jogosultságok |
+| Aktivitásnapló | Spatie Laravel Activitylog 4 | Auditnapló kritikus műveletekhez |
+| Adatbázis | MySQL 8.0\+ | Relációs adatkezelés, **InnoDB motor** (éles); fejlesztési dump MyISAM |
+| ORM / migráció | Eloquent ORM \+ Laravel Migrations | Sémakezelés, migrációk, seeders, factories |
+| Export (PDF) | barryvdh/laravel-dompdf 3 | PDF riportok generálása |
+| Export (Excel) | Maatwebsite Excel 3 \+ PhpSpreadsheet | Excel import/export |
+| Csomagkezelő | Composer 2 | PHP függőségkezelés (`vendor/` mappa) |
+| Frontend build | Vite 7 \+ npm | JS/CSS bundling (`node_modules/` mappa) |
+| CSS framework | Tailwind CSS 4 | Utility-first CSS |
+| Fájltároló | Laravel Storage (S3 / local disk) | Exportok, mellékletek, `storage/app/` |
+| Cache / Queue | Redis 7\+ \+ Laravel Queue | Munkamenet-kezelés, háttérfeladatok |
+| Webszerver | Nginx 1.24\+ | Reverse proxy, SSL-termináció (Octane elé, PHP-FPM nem szükséges) |
+| Folyamatkezelő | Supervisor | Octane \+ Queue worker \+ Reverb szerver felügyelet |
+| Konténerizáció | Docker \+ Docker Compose (opcionális) | Egységes telepítési környezet |
+
+## Magasszintű architektúradiagram
+
+```text
+              ┌──────────────────────────────────────────┐
+              │             Felhasználó                  │
+              │      Böngésző (HTTPS + WSS)              │
+              └──────────┬────────────────┬──────────────┘
+                         │ HTTPS          │ WSS
+              ┌──────────▼────────────────▼──────────────┐
+              │                  Nginx                   │
+              │       Reverse Proxy + SSL termináció     │
+              │  :443 → Octane (:8000)                   │
+              │  /app → Reverb (:8080) [WS upgrade]      │
+              └──────────┬────────────────┬──────────────┘
+                         │                │
+         ┌───────────────▼──┐    ┌────────▼──────────────┐
+         │  Laravel Octane  │    │    Laravel Reverb      │
+         │  (Swoole :8000)  │    │   (WebSocket :8080)    │
+         │                  │    │                        │
+         │  Livewire+Blade  │    │  Pusher-protocol WS    │
+         │  Controllers     │    │  csatorna kezelés      │
+         │  Services/Jobs   │    └────────────┬───────────┘
+         │  Filament Admin  │                 │ pub/sub
+         └──────────┬───────┘    ┌────────────▼───────────┐
+                    │            │        Redis 7          │
+                    ├────────────│  broadcast bus + Queue  │
+                    │            │  + Session + Cache      │
+                    │            └────────────────────────-┘
+              ┌─────▼────────────────────────────────────┐
+              │               Adatréteg                  │
+              │   MySQL 8.0+           Storage (S3)      │
+              │   (Eloquent ORM)       Exportok/Fájlok   │
+              └──────────────────────────────────────────┘
+```
+
+## Könyvtárstruktúra
+
+Az alkalmazás tipikus telepített mappaszerkezete:
+
+```text
+/opt/analyse/                     ← alkalmazás gyökere (Laravel projekt root)
+├── .env                          ← környezeti változók (nem kerül verziókezelőbe)
+├── .env.example                  ← sablon konfig fájl
+├── artisan                       ← Laravel Artisan CLI belépési pont
+├── composer.json
+├── composer.lock
+├── package.json                  ← Vite + frontend függőségek
+├── package-lock.json
+├── vite.config.js
+│
+├── vendor/                       ← Composer csomagok (~200–500 MB, ~30 000+ fájl)
+│   ├── laravel/framework/
+│   ├── livewire/livewire/
+│   ├── illuminate/
+│   └── ...
+│
+├── node_modules/                 ← npm/Vite frontend csomagok (~100–300 MB)
+│   ├── vite/
+│   ├── tailwindcss/
+│   ├── laravel-echo/
+│   ├── pusher-js/
+│   └── ...
+│
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/          ← HTTP Controller-ek
+│   │   ├── Middleware/           ← Auth, RBAC, rate-limit middleware
+│   │   └── Livewire/             ← Livewire komponens osztályok
+│   ├── Filament/                 ← Filament admin panel erőforrások és oldalak
+│   │   ├── Resources/            ← Filament CRUD resource-ok
+│   │   └── Pages/                ← Egyedi Filament admin oldalak
+│   ├── Models/                   ← Eloquent modellek (User, Project, Journey, …)
+│   ├── Services/                 ← üzleti logika (export, email, integráció)
+│   ├── Jobs/                     ← Queue job-ok (PDF, Excel generálás)
+│   └── Policies/                 ← Laravel Gate / Policy (RBAC)
+│
+├── database/
+│   ├── migrations/               ← MySQL sémamigráció fájlok
+│   ├── seeders/                  ← alap seed adatok
+│   └── factories/                ← tesztadat-gyárak
+│
+├── resources/
+│   ├── views/                    ← Blade template-ek
+│   │   ├── layouts/
+│   │   ├── livewire/             ← Livewire komponens nézetek
+│   │   └── ...
+│   ├── js/                       ← Alpine.js, egyéb frontend JS
+│   └── css/                      ← Tailwind / egyéb stílusok
+│
+├── routes/
+│   ├── web.php                   ← Livewire / Blade route-ok
+│   └── api.php                   ← opcionális REST API végpontok
+│
+├── public/
+│   ├── index.php                 ← Laravel belépési pont
+│   └── build/                   ← Vite build kimenet (generált, ~2–20 MB)
+│
+├── storage/
+│   ├── app/                      ← feltöltött fájlok, exportok
+│   │   └── public/               ← publikusan elérhető fájlok (symlink: public/storage)
+│   ├── framework/                ← cache, session, view cache
+│   └── logs/                     ← alkalmazásnaplók (laravel.log)
+│
+├── bootstrap/
+│   └── cache/                    ← Laravel bootstrap cache (generált)
+│
+└── config/                       ← Laravel konfigurációs fájlok
+    ├── database.php              ← MySQL kapcsolat konfiguráció
+    ├── queue.php                 ← Redis queue konfiguráció
+    └── ...
+```
+
+<Info>
+  A `vendor/` mappa a `composer install` után, a `node_modules/` és `public/build/` a `npm install` \+ `npm run build` után jön létre. Ezeket **nem** kell verziókezelőbe felvenni — a `.gitignore` kizárja őket. A `storage/` és `bootstrap/cache/` mappáknak írási jogosultság szükséges (pl. `chmod -R 775`).
+</Info>
+
+## Kulcsfontosságú tervezési döntések
+
+### Livewire-alapú reaktív UI
+
+A frontend nem különálló SPA, hanem Laravel Blade template-eken alapuló, Livewire komponensekkel megvalósított reaktív felület. Az állapotkezelés szerver oldalon történik — nincs szükség külön REST API-ra a UI és a backend között. Alpine.js biztosítja a kliens-oldali kisebb interakciókat (dropdown, modal, stb.).
+
+### Filament 4 admin panel
+
+A rendszer adminisztrációs felülete Filament 4 alapú (`/admin`). A felhasználókezelés, projektek, szerepkörök és egyéb beállítások itt érhetők el. A Filament activity log plugin (`pxlrbt/filament-activity-log`) naplózza a kritikus adminisztrációs műveleteket.
+
+### Laravel Octane (Swoole)
+
+Az alkalmazás Laravel Octane 2 \+ Swoole alapon fut, amely persistent worker folyamatokat tart fenn, jelentősen csökkentve a request-per-second latenciát a hagyományos PHP-FPM megközelítéshez képest.
+
+### Laravel Reverb (WebSocket)
+
+A valós idejű értesítések Laravel Reverb 1.6 önhosztolt WebSocket szerveren keresztül működnek. A Reverb egy önálló, hosszan futó PHP folyamat (`php artisan reverb:start`), amelyet Supervisor felügyel.
+
+**Kommunikációs folyamat:**
+
+1. A Laravel alkalmazás `broadcast(new SomeEvent())` hívást tesz
+2. Laravel → Redis pub/sub csatornán publikálja az eseményt
+3. Reverb feliratkozik a Redis csatornára → WebSocket push a klienseknek
+4. A böngészőben futó **Laravel Echo** (pusher-js driver) megkapja az eseményt → UI frissítés Livewire-en belül
+
+**Kapcsolódó .env változók:**
+
+| Változó | Példa | Leírás |
+| --- | --- | --- |
+| `BROADCAST_CONNECTION` | `reverb` | Broadcast driver |
+| `REVERB_APP_ID` | `my-app-id` | Reverb alkalmazás azonosító |
+| `REVERB_APP_KEY` | `my-app-key` | Reverb kulcs (Echo is ezt használja) |
+| `REVERB_APP_SECRET` | `my-app-secret` | Reverb titkos kulcs |
+| `REVERB_HOST` | `127.0.0.1` | Reverb belső hosztneve (Supervisorban is `127.0.0.1`) |
+| `REVERB_PORT` | `8080` | Reverb szerver portja |
+| `REVERB_SCHEME` | `http` | Reverb belső kommunikációja HTTP — SSL terminálás Nginxnél történik |
+| `VITE_REVERB_APP_KEY` | `${REVERB_APP_KEY}` | Echo kliens kulcs (Vite-on át) |
+| `VITE_REVERB_HOST` | `${REVERB_HOST}` | Echo kliens hoszt |
+| `VITE_REVERB_PORT` | `${REVERB_PORT}` | Echo kliens port |
+| `VITE_REVERB_SCHEME` | `${REVERB_SCHEME}` | Echo kliens scheme |
+
+**Nginx WebSocket proxy konfiguráció** (a fő `server` blokkba):
+
+```nginx
+location /app {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "Upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 60s;
+}
+```
+
+**Supervisor konfiguráció** (`/etc/supervisor/conf.d/analyse-reverb.conf`):
+
+```ini
+[program:analyse-reverb]
+command=php /opt/analyse/artisan reverb:start --host=127.0.0.1 --port=8080
+autostart=true
+autorestart=true
+user=www-data
+redirect_stderr=true
+stdout_logfile=/opt/analyse/storage/logs/reverb.log
+```
+
+### MVC \+ Service réteg
+
+Az üzleti logika Laravel Controller → Service → Repository/Model rétegeken keresztül van szervezve. Az Eloquent ORM kezeli a MySQL adatbázis-interakciókat. A komplex, időigényes műveletek (PDF-export, tömeges e-mail) Laravel Queue job-ként futnak Supervisor felügyelet alatt.
+
+### Adatbázis-izoláció
+
+Az adatbázis-kiszolgáló nem érhető el közvetlenül az internetről — kizárólag az alkalmazásréteg kommunikálhat vele a belső hálózaton keresztül.
+
+### Aszinkron műveletek
+
+Az időigényes folyamatok (pl. PDF-exportálás, tömeges e-mail-értesítések) aszinkron módon, háttérfeladatként futnak, hogy ne blokkolják a felhasználói kéréseket.
+
+## Biztonsági architektúra
+
+- **Hitelesítés:** Laravel session-alapú auth \+ Laravel Sanctum, CSRF-védelem Livewire-en beépítve
+- **Hozzáférés-vezérlés:** Laravel Gate \+ Policy réteg (RBAC), minden route és Livewire action védett
+- **Adattitkosítás:** TLS 1.2\+ az összes kommunikációhoz; érzékeny mezők Laravel `encrypt()` segítségével tárolva
+- **Input validáció:** Laravel Form Request osztályok és Livewire `$rules` validáció, kizárólag szerver oldalon
+- **CSRF-védelem:** Laravel beépített CSRF token minden form-on és Livewire kérésben
+- **Rate limiting:** Laravel `throttle` middleware az érzékeny route-okon
+
+## Skálázási szempontok
+
+| Forgatókönyv | Megközelítés |
+| --- | --- |
+| Több egyidejű felhasználó | Octane `--workers` növelése, Nginx upstream pool (több Octane node), Supervisor queue worker pool |
+| Nagy adatmennyiség | MySQL master–replica replikáció; Eloquent `read`/`write` connection szétválasztás |
+| Magas exportigény | Laravel Queue \+ Redis driver, Job chain PDF/Excel generáláshoz |
+| Globális elérhetőség | CDN a `public/build/` Vite-assetekhez, multi-region telepítés |
+| Livewire skálázás | Redis session driver, Laravel Octane (Swoole) persistent worker pool |
+| WebSocket skálázás | Laravel Reverb horizontálisan skálázható; Redis publish/subscribe bus |
+| Adatbázis karbantartás | MySQL 8 online DDL — minimális leállás `php artisan migrate` futtatásakor |
+
+<Info>
+  A fizikai infrastruktúra részleteiért lásd a [Fizikai rendszertervett](/technologia/fizikai-rendszerterv), a logikai komponensek kapcsolataiért a [Logikai rendszertervett](/technologia/logikai-rendszerterv).
+</Info>

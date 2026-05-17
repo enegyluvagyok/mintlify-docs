@@ -1,0 +1,64 @@
+---
+title: "Igazgatási rendszerterv"
+description: "A rendszer igazgatási (adminisztrációs) felépítése: felhasználókezelés, szerepkörök, jogosultságok és szervezeti szabályok."
+---
+
+Az igazgatási rendszerterv az Analyse platform szervezeti és adminisztrációs felépítését írja le: hogyan kezelhetők a felhasználók, milyen szerepkörök léteznek, és milyen szabályok vonatkoznak a hozzáférésre.
+
+## Felhasználókezelés
+
+Az Analyse-ban a felhasználói fiókok kezelése az adminisztrátori felületen keresztül történik (`/admin`).
+
+- **Fiók létrehozása** — Az adminisztrátor hozza létre az új felhasználói fiókokat és állítja be az alapértelmezett projektet.
+- **Jóváhagyási folyamat** — Új fiókok jóváhagyást igényelnek az adminisztrátortól az első bejelentkezés előtt.
+- **Jelszókezelés** — A jelszó visszaállítása e-mailen keresztül lehetséges.
+
+## Szerepkörök és jogosultságok
+
+Az Analyse szerepkör-alapú hozzáférés-vezérlést (RBAC) alkalmaz. Az egyes szerepkörökhöz tartozó jogosultságok:
+
+| Szerepkör | Leírás | Főbb jogosultságok |
+| --- | --- | --- |
+| **Adminisztrátor** | Teljes rendszerszintű hozzáférés | Felhasználók kezelése, projektek létrehozása, minden beállítás módosítása |
+| **Projektmenedzser** | Projekten belüli teljes hozzáférés | Tesztterv létrehozása, tesztelők hozzárendelése, eredmények megtekintése |
+| **Tesztelő** | Végrehajtói hozzáférés | Hozzárendelt tesztfuttatások végrehajtása, eredmények rögzítése |
+| **Megfigyelő** | Csak olvasási hozzáférés | Eredmények és riportok megtekintése, exportok letöltése |
+
+## Szervezeti hierarchia
+
+```text
+Szervezet
+└── Adminisztrátor
+    ├── Projekt A
+    │   ├── Projektmenedzser
+    │   ├── Tesztelő(k)
+    │   └── Megfigyelő(k)
+    └── Projekt B
+        ├── Projektmenedzser
+        └── Tesztelő(k)
+```
+
+## Egyéni mezők és sémabeállítások
+
+Az adminisztrátor testreszabhatja a rendszert az alábbi eszközökkel:
+
+<CardGroup cols={2}>
+  <Card title="Egyéni mezők" icon="sliders" href="/admin/custom-fields">
+    Projektspecifikus metaadatmezők hozzáadása a tesztrekordokhoz.
+  </Card>
+
+  <Card title="Eseménysémák" icon="code" href="/admin/event-schemas">
+    Analitikai eseménysémák konfigurálása a tesztlépésekhez.
+  </Card>
+</CardGroup>
+
+## Biztonsági irányelvek
+
+- **Minimális jogosultság elve** — Minden felhasználó csak a feladatához szükséges minimális hozzáférést kapja.
+- **Projektszintű izoláció** — A felhasználók csak azokhoz a projektekhez férnek hozzá, amelyekhez hozzárendelték őket.
+- **Auditnapló** — A kritikus adminisztrációs műveletek naplózásra kerülnek.
+- **Munkamenet-kezelés** — A munkamenetek időkorlátos tokenekkel kerülnek megvalósításra; inaktivitás esetén automatikus kijelentkezés.
+
+<Info>
+  A felhasználók és szerepkörök részletes kezelési lépéseit a [Felhasználók & Szerepkörök](/admin/users-roles) dokumentáció tartalmazza.
+</Info>

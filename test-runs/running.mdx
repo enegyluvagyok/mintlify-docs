@@ -1,0 +1,239 @@
+---
+title: "Futtatás"
+---
+
+A Tesztfuttató az a felület, ahol a csapatod lépésről lépésre végigmegy egy teszttervén. Minden journey verziót egyenként nyitsz meg a bal oldali fából; a jobb oldali panelen a lépéstáblázat jelenik meg — platform-oszlopokkal, státuszgombokkal és hibarögzítési lehetőségekkel.
+
+## Mielőtt elkezdenéd
+
+<Info>
+  Tesztfuttatás indításához aktív teszttervre van szükséged. Ha a terv inaktiválódott, a korábbi futtatások még megtekinthetők, de újak nem indíthatók.
+</Info>
+
+Győződj meg arról, hogy megvan:
+
+- Egy tesztterv, amelyhez legalább egy journey verzió hozzá van rendelve
+- A tesztelni kívánt környezet és eszközinformációk (opcionális, de ajánlott)
+- Bármilyen releváns kiadási információ, ha ezt a futtatást egy kiadáshoz szeretnéd kapcsolni
+
+## Tesztfuttatás indítása
+
+<Steps>
+  <Step title="Menj a teszttervhez">
+    Nyisd meg a projektet, és navigálj a **Teszttervek** menüpontra. Válaszd ki a végrehajtani kívánt tervet.
+  </Step>
+  <Step title="Hozz létre egy új tesztfuttatást">
+    Kattints az **Új tesztfuttatás** gombra. Adj a futtatásnak egy leíró nevet — például `v2.4.0 füstpróba` vagy `18. sprint regresszió`.
+  </Step>
+  <Step title="Opcionális kontextus beállítása">
+    Opcionálisan kapcsold a futtatást egy **környezethez** (pl. staging), egy **kiadáshoz** és egy vagy több **eszközhöz**. Ezek a mezők segítenek az eredmények szűrésében és összehasonlításában később.
+  </Step>
+  <Step title="Nyisd meg a Tesztfuttatót">
+    Kattints a **Tesztfuttató megnyitása** gombra. A bal oldali fában megjelennek a journey verziók. Ha még nem választottál ki egyet, a jobb oldali panel tájékoztató szöveget mutat.
+  </Step>
+</Steps>
+
+## A Tesztfuttató felépítése
+
+- **Bal oldali fa** — az összes journey verzió az aktuális státuszukkal; bármilyen sorrendben navigálhatsz, nincs kötött sorrend.
+- **Jobb oldali panel** — a kiválasztott journey verzió fejléce, ragadós műveletsáv és lépéstáblázat.
+
+### Fejléc
+
+A jobb panel tetején a journey verzió kenyérmorzsa-útvonala látható. Ha ugyanahhoz a verzióhoz korábbi futtatások is léteznek, a legördülő is megjelenik a verzió neve mellett — ebből választhatsz korábbi futtatást megtekintésre (alapértelmezett: **Aktuális**).
+
+A fejléc alatt egy sor metaadat látható:
+
+- **Verzió** — a journey verzió azonosítója
+- **Létrehozva** — a verzió létrehozásának dátuma és ideje
+- **Tesztelő** — a bejelentkezett felhasználó neve
+- **Lépések** — az összes lépés darabszáma
+- **Státusz** — az aktuális futtatási elem eredménye, vagy `még nincs mentve`
+
+### Korábbi futtatások legördülő
+
+Minden korábbi futtatásnál megjelenik a futtatás azonosítója (`Run #ID`), eredménye nagybetűsen (pl. `PASSED`, `FAILED`) és létrehozásának dátuma és ideje.
+
+Korábbi futtatás kiválasztásakor az oldal **csak olvasható módba** vált — a státuszgombok le vannak tiltva, az adatok nem szerkeszthetők.
+
+## A ragadós műveletsáv
+
+A jobb panel tetején `position: sticky` rögzítéssel jelenik meg, görgetéskor is látható marad. Tartalma attól függ, hogy szerkeszthető vagy csak olvasható módban vagy-e.
+
+### Csak olvasható módban
+
+**Platform hibák (Excel)** gomb jelenik meg — kattintásra az adott futtatási elem összes platform-szintű hibáját Excel fájlba exportálja (`exportRunPlatformErrors`).
+
+### Aktív (szerkeszthető) futtatásban
+
+| Gomb | Funkció |
+| --- | --- |
+| **Journey hiba** | Megnyitja a journey szintű hiba modalt. Ha már van mentett hiba, a gomb sárga háttérrel (`#fffbeb`) és narancssárga `!` badge-dzsel jelenik meg. |
+| **Szüneteltet** | Elmenti a journey szintű hiba szerkesztőjének tartalmát, majd meghívja a `break` Livewire-metódust. A futtatás félbeszakított állapotba kerül, bármikor folytatható. |
+| **Futtatás mentése** | Elmenti a journey szintű hiba szerkesztőjének tartalmát, majd meghívja a `saveRun` Livewire-metódust — véglegesíti a futtatást. |
+
+<Warning>
+  Mindkét gomb a mentés előtt 50ms késleltetéssel hívja meg a Livewire-metódust, hogy a Trix-szerkesztő tartalma biztosan szinkronizálódjon. Ha bezárod az oldalt ezen gombok nélkül, a nem mentett szöveg elveszhet.
+</Warning>
+
+## A lépéstáblázat
+
+Az oszlopok dinamikusan épülnek fel: csak azok a platform-oszlopok jelennek meg, amelyekhez az adott journey verzió lépésein van rögzített adat.
+
+| Oszlop | Megjelenik | Leírás |
+| --- | --- | --- |
+| **Definíció** | Mindig | A lépés szöveges definíciója |
+| **Android** | Ha van Android-adat | Platform-adatok és hibatípus |
+| **iOS** | Ha van iOS-adat | Platform-adatok és hibatípus |
+| **Web** | Ha van Web-adat | Platform-adatok és hibatípus |
+| **Státusz** | Mindig | Státuszgombok és összesítő badge |
+
+## Lépés eredményének rögzítése
+
+A **Státusz** oszlopban minden lépésnél két gomb jelenik meg:
+
+| Gomb | Érték | Jelentés |
+| --- | --- | --- |
+| 🟢 | `passed` | A lépés sikeresen lefutott |
+| 🔴 | `failed` | A lépés hibás eredményt produkált |
+
+Ha van kiválasztott eredmény, a nem aktív gomb elhalványul és kiszürkül. Az eredmény bármikor módosítható. Csak olvasható módban a gombok `disabled` állapotban vannak.
+
+### Összesítő státuszbadge
+
+A státuszgombok alatt az Analyse összesítő badge-eket jelenít meg a lépés és a platform-szintű állapotok alapján:
+
+| Badge | Mikor jelenik meg |
+| --- | --- |
+| **Sikeres** | A lépés `passed`, és egyik platformon sincs `invalid`, `blocked` vagy `not_ran` |
+| **Sikertelen** | A lépés `failed`, és nincs platform-szintű speciális státusz |
+| **Hibás** | Legalább egy platform-cella `invalid` státuszú |
+| **Blokkolt** | Legalább egy platform-cella `blocked` státuszú |
+| **Nem futott** | Legalább egy platform-cella `not_ran` státuszú |
+
+Egyszerre több badge is megjelenhet, ha különböző platformokon különböző státuszok vannak.
+
+## Platform-cellák
+
+Ha egy lépéshez platform-adat tartozik (Android / iOS / Web), az adott oszlopban egy kártya jelenik meg. A kártya megjelenése és szerkeszthetősége a lépés aktuális eredményétől függ.
+
+### A platform-cella felépítése
+
+1. **Státuszbadge és megjegyzés** — a cella tetején egymás mellett. Ha van platform-szintű megjegyzés, az a badge mellé kerül (max. 180px, csonkítva, tooltip-pal a teljes szövegre).
+2. **„Mi a hiba?" szekció** — csak `failed` lépésnél, szerkeszthető módban: hibatípus-legördülő és megjegyzés-mező.
+3. **Event sor** — az analitikai esemény neve (`event` vagy `event_name` mező értéke).
+4. **Kulcs–érték sorok** — a platform-adatban tárolt összes többi paraméter az `event`/`event_name` kulcsokon kívül.
+
+### Platform-szintű hibatípusok
+
+Ha egy lépés eredménye `failed`, a platform-cellán belül megjelenik a **„Mi a hiba?"** legördülő. Ez a szekció csak `failed` lépésnél és szerkeszthető módban aktív:
+
+| Hibatípus | Érték | Mikor használd |
+| --- | --- | --- |
+| **Hibás érték** | `invalid` | Az esemény neve vagy egy paraméter értéke eltér a várttól |
+| **Nem futott le** | `not_ran` | Az esemény egyáltalán nem sült el az adott platformon |
+| **Blokkolt** | `blocked` | A lépés végrehajtása előfeltétel hiánya miatt nem volt lehetséges |
+
+A legördülő mellé szabad szöveges **megjegyzés mezőt** is kitölthetsz az adott platform-cellához.
+
+### Megváltozott értékek vizuális jelzése
+
+Az Analyse összehasonlítja az aktuálisan tárolt értékeket az eredeti lépés-alap (`stepData`) értékeivel. Ha eltérést talál:
+
+- Az eltérő mező **piros kerettel és piros háttérrel** jelenik meg
+- Tooltip mutatja az elvárt (`Expected`) és a tényleges (`Actual`) értéket egymás alatt
+- Ez vonatkozik az event nevére, a kulcsokra és az értékekre egyaránt
+
+### Értékek és kulcsok szerkesztése `invalid` esetén
+
+Ha a platform-szintű hibatípusként **Hibás érték** (`invalid`) van kiválasztva, az event neve és az összes kulcs–érték pár közvetlenül szerkeszthetővé válik:
+
+- **Event neve** — `updateStep(lépés_id, 'platform__event', érték)` hívással mentve
+- **Kulcsok** — `renamePlatformKey(lépés_id, platform, régi_kulcs, új_kulcs)` hívással átnevezhetők
+- **Értékek** — `updateStep(lépés_id, 'platform__kulcsnév', érték)` hívással felülírhatók
+
+Ha az aktuális érték eltér az alaptól, a mező piros keretet kap, és tooltip mutatja az elvárt vs. tényleges értéket.
+
+### Platform-cella vizuális állapotok
+
+| Állapot | Keret | Háttér | Badge |
+| --- | --- | --- | --- |
+| `invalid` — Hibás érték | Piros | Halvány piros | Hibás érték |
+| `not_ran` — Nem futott le | Szürke | Halvány szürke | Nem futott le |
+| `blocked` — Blokkolt | Sárga | Halvány sárga | Blokkolt |
+| Lépés `passed`, nincs platform-státusz | Zöld | Halvány zöld | Sikeres |
+| Lépés `failed`, nincs platform-státusz | Piros | Halvány piros | Sikertelen |
+| Nincs státusz (alapállapot) | Szürke | Fehér | — |
+
+## Journey szintű hiba
+
+Ha a probléma nem egy konkrét lépéshez, hanem az egész journey-hez kapcsolódik — pl. egy képernyő nem tölt be, globális analitikai hiba van, vagy törött a navigáció —, a **Journey hiba** modal segítségével rögzítheted.
+
+### A modal megnyitása és bezárása
+
+A **Journey hiba** gombra kattintáskor a modal kinyílik, a háttér görgetése letiltódik. Bezárni háromféleképpen lehet:
+
+- `ESC` billentyű
+- A jobb felső `×` gomb
+- A modal területén kívülre kattintás
+
+### Journey szintű hiba rögzítése (szerkeszthető módban)
+
+<Steps>
+  <Step title="Kapcsold be a jelölőt">
+    A modalban kapcsold be a **Jelölés journey szintű hibaként** jelölőnégyzetet (`hasJourneyLevelIssue`). Kikapcsolt állapotban csak szaggatott keretes tájékoztató szöveg látható.
+  </Step>
+  <Step title="Írd le a hibát a Trix-szerkesztőben">
+    Bekapcsolt jelölő esetén megjelenik egy sárga keretű figyelmeztetés, majd alatta egy **Trix rich text szerkesztő** (min. 260px magasság). A szerkesztő tartalma a `trix-change` eseményen keresztül folyamatosan szinkronizálódik a Livewire `journeyNoteHtml` tulajdonságával.
+  </Step>
+  <Step title="Zárd be a modalt, majd mentsd a futtatást">
+    A journey szintű hiba a **Szüneteltet** vagy a **Futtatás mentése** gomb megnyomásakor kerül véglegesen tárolásra. Mindkét gomb mentés előtt kimenti a szerkesztő tartalmát (`setJourneyNoteHtml`).
+  </Step>
+</Steps>
+
+### A Journey hiba gomb vizuális jelzése
+
+| Állapot | Gomb megjelenése |
+| --- | --- |
+| Nincs mentett hiba | Fehér háttér, szürke keret |
+| Van mentett hiba | Sárga háttér, sárga keret, narancssárga `!` badge |
+
+### Journey szintű hiba megtekintése (csak olvasható módban)
+
+- **Van mentett hiba:** sárga keretű dobozban jelenik meg a formázott szöveg ("Mentett journey szintű hiba" felirattal)
+- **Nincs mentett hiba:** szürke szaggatott keretes doboz — "Ehhez a futtatáshoz nincs mentett journey szintű hiba."
+
+## Szüneteltetés és mentés
+
+| Gomb | Livewire-metódus | Viselkedés |
+| --- | --- | --- |
+| **Szüneteltet** | `break` | Félbeszakítja a futtatást; az eddigi eredmények megmaradnak, a futtatás bármikor folytatható. |
+| **Futtatás mentése** | `saveRun` | Véglegesíti a futtatást az összes rögzített eredménnyel, platform-hibával és journey szintű hibával. |
+
+Mindkét gomb megnyomásakor az Analyse először kimenti a Trix-szerkesztő tartalmát (`setJourneyNoteHtml`), majd 50ms-es késleltetéssel hívja meg a Livewire-metódust.
+
+<Warning>
+  Ha bezárod az oldalt a **Szüneteltet** vagy a **Futtatás mentése** gomb megnyomása nélkül, az el nem mentett megjegyzések és a journey szintű hiba szövege elveszhet.
+</Warning>
+
+## Hibák naplózása hibakövető rendszerbe
+
+Ha a projektedhez Jira vagy Redmine integráció van beállítva, sikertelen lépésekből közvetlenül naplózhatsz hibát anélkül, hogy elhagynád a Tesztfuttatót. A létrehozott jegy URL-je visszakapcsolódik a tesztlépés eredményéhez.
+
+<CardGroup cols={2}>
+  <Card title="Tesztfuttatások áttekintése" icon="flag" href="/test-runs/overview">
+    Futtatási státuszok, előrehaladás-számítás és a futtatások kapcsolata a kiadásokkal.
+  </Card>
+
+  <Card title="Eredmények és export" icon="chart-bar" href="/test-runs/results">
+    Összefoglalók megtekintése és PDF / Excel export a futtatás befejezése után.
+  </Card>
+
+  <Card title="Hibakövető integráció" icon="bug" href="/integrations/issue-trackers">
+    Jira vagy Redmine csatlakoztatása hibák naplózásához sikertelen lépésekből.
+  </Card>
+
+  <Card title="Platform hibák exportja" icon="file-excel" href="/test-runs/results">
+    Platform-szintű hibák letöltése Excel formátumban korábbi futtatásokból.
+  </Card>
+</CardGroup>

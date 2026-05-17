@@ -1,0 +1,68 @@
+---
+title: "Modulok: szervezd a Journeyket a program funkcionális egységeihez"
+description: "Értsd meg hogyan szervezheted a Journeyket funkcionális egységekbe, hogy logikus és karbantartható legyen a projekted."
+---
+
+A modul egy projekt elnevezett csoportosítása, amely összegyűjti a kapcsolódó journey-ket. Gondolj a modulra úgy, mint a terméked egy funkcionális területére — például **Hitelesítés**, **Pénztár** vagy **Felhasználói beállítások**. A journey-k modulokba szervezésével nagy projektek is átláthatók maradnak, és könnyebb felelőst rendelni a csapatok között.
+
+## Modul létrehozása
+
+<Steps>
+  <Step title="Egy projekt megnyitása">
+    Navigálj ahhoz a projekthez, amelyhez modult szeretnél hozzáadni, majd nyisd meg a **Modulok** fület.
+  </Step>
+  <Step title="Kattints az Új modul gombra">
+    Válaszd az **Új modul** lehetőséget a létrehozási űrlap megnyitásához.
+  </Step>
+  <Step title="A modul adatainak kitöltése">
+    Add meg a **Nevet** és opcionálisan a **Leírást**. Az Analyse automatikusan generál egy **Kulcsot** a névből — mentés előtt módosíthatod. Állítsd be a **Rendezési sorrendet**, hogy szabályozd, hol jelenjen meg a modul a többi modulhoz képest ugyanazon a projekten belül.
+  </Step>
+  <Step title="Mentés">
+    Kattints a **Modul létrehozása** gombra. A modul most készen áll journey-k fogadására.
+  </Step>
+</Steps>
+
+## Modulmezők
+
+| Mező | Kötelező | Megjegyzések |
+| --- | --- | --- |
+| Név | Igen | Megjelenik az oldalsávban és a navigációs hivatkozásokban |
+| Kulcs | Igen | Egyedi slug a projekten belül, automatikusan generálódik a névből |
+| Leírás | Nem | Opcionális kontextus a csapattagok számára |
+| Rendezési sorrend | Nem | Egész szám; a kisebb számok jelennek meg előbb. Alapértelmezése 0 |
+
+<Note>
+  A rendezési sorrend mező szabályozza, hogy a modulok milyen sorrendben jelennek meg a projekt oldalán és a tesztterv nézetekben. Ha két modul ugyanolyan rendezési értékkel rendelkezik, névük szerint betűrendbe állnak.
+</Note>
+
+## Hogyan szervezik a modulok a journey-ket
+
+Minden journey pontosan egy modulhoz tartozik. Journey létrehozásakor ki kell választani a szülő modult. A modul ezután összecsukható szakcióként jelenik meg a projekt journey-listájában, alatta az összes journey-jével.
+
+<Tip>
+  Igazítsd a modulneveket a terméked navigációjához vagy funkció-jelzőihez. A stabil modulnevek megkönnyítik az új csapattagoknak a megfelelő journey-k megtalálását, és csökkentik a késői átszervezés szükségességét.
+</Tip>
+
+<Warning>
+  Egy modul törlése egyben törli az összes benne lévő journey-t is, azok verzióival és tesztlépéseivel együtt. Győződj meg arról, hogy a megőrizni kívánt journey verziókat előbb áthelyezted egy másik modulba.
+</Warning>
+
+## Tippek a modulok strukturálásához
+
+<CardGroup cols={2}>
+  <Card title="Journey-k" icon="route" href="/projects/journeys">
+    Ismerd meg, hogyan hozz létre journey-ket a moduljaidban, és rendszerezd őket almodul-címkékkel.
+  </Card>
+
+  <Card title="Journey verziók" icon="code-branch" href="/projects/journey-versions">
+    Adj verziózott teszteseteket a moduljaidban lévő minden journey-hez.
+  </Card>
+
+  <Card title="Projektek áttekintése" icon="folder" href="/projects/overview">
+    Lásd, hogyan illeszkednek a modulok az Analyse teljes projekthierarchiájába.
+  </Card>
+
+  <Card title="Teszttervezés" icon="clipboard-list" href="/test-plans/overview">
+    Készíts tesztterveket a moduljaidban lévő journey verziókból.
+  </Card>
+</CardGroup>

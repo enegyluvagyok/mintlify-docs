@@ -1,0 +1,142 @@
+---
+title: "Logikai rendszerterv"
+description: "A rendszer logikai felépítésének leírása: rétegek, komponensek, adatfolyamok és a köztük lévő kapcsolatok."
+---
+
+A logikai rendszerterv az Analyse platform szoftverkomponenseinek, rétegeinek és belső adatfolyamatainak strukturált leírását tartalmazza. Ez a dokumentum elsősorban a fejlesztők és rendszertervezők számára releváns.
+
+## Rétegmodell
+
+Az Analyse háromrétegű (three-tier) architektúrán alapul:
+
+### 1. Prezentációs réteg (Livewire \+ Blade)
+
+- Böngészőalapú webalkalmazás, szerver-oldali rendereléssel (Laravel Blade template-ek), **Nginx → Octane (Swoole, :8000)** fogadja a kéréseket
+- Reaktív UI komponensek: **Laravel Livewire 3** — az állapot szerver oldalon él, a kliens XHR-en szinkronizál, nincs szükség külön API-ra a frontend és a backend között
+- Valós idejű csatornák: **Laravel Echo** (pusher-js driver) WSS-en keresztül kapcsolódik a **Reverb** WebSocket szerverhez (Nginx `/app` proxy → Reverb `:8080`)
+- Kliens-oldali kisebb interakciók: **Alpine.js** (dropdown, modal, inline validáció)
+- CSS/JS bundling: **Vite 7** (`npm run build` → `public/build/`, forrás: `resources/js/`, `resources/css/`)
+
+### 2. Alkalmazásréteg (Laravel MVC \+ Service)
+
+- **Controllers** (`app/Http/Controllers/`) — HTTP kérések fogadása, válasz visszaküldése
+- **Livewire Components** (`app/Http/Livewire/`) — stateful reaktív UI komponensek
+- **Filament Resources** (`app/Filament/Resources/`) — adminisztrációs CRUD felületek (`/admin`)
+- **Services** (`app/Services/`) — újrafelhasználható üzleti logika (export, email, integráció)
+- **Jobs** (`app/Jobs/`) — aszinkron háttérfeladatok (PDF/Excel generálás, tömeges e-mail) Laravel Queue-n keresztül
+- **Policies** (`app/Policies/`) — RBAC jogosultságkezelés Laravel Gate \+ Spatie Permission csomaggal
+- Felhasználói hitelesítés: Laravel Auth middleware \+ Laravel Sanctum 4
+- Valós idejű értesítések: Laravel Reverb (WebSocket szerver) \+ Laravel Echo (kliens)
+- Alkalmazásszerver: Laravel Octane 2 (Swoole) persistent worker folyamatokkal
+- Integrációs pontok kezelése (Jira, Redmine, Figma, CMP)
+- Exportok generálása (PDF: DomPDF, Excel: Maatwebsite/PhpSpreadsheet) aszinkron Job-ként
+
+### 3. Adatréteg (Perzisztencia)
+
+- **MySQL 8.0\+** relációs adatbázis a strukturált adatok tárolására (**InnoDB** motor szükséges éles környezetben; a fejlesztési dump jelenleg MyISAM-ot használ — lásd: [Adatbázis-terv](/technologia/adatbazis-terv)); utf8mb4 karakterkészlet
+- **Eloquent ORM** (`app/Models/`) — modellekhez, kapcsolatokhoz; sémakezelés Laravel Migrations segítségével (`database/migrations/`)
+- **Fájltároló** (S3-kompatibilis / MinIO) a mellékletekhez, PDF és Excel exportokhoz
+- **Redis 7:** session store (`SESSION_DRIVER=redis`) és Laravel Queue backend (`QUEUE_CONNECTION=redis`); worker: `php artisan queue:work`, felügyelet: Supervisor; Reverb broadcast bus is Redis-t használ
+
+## Komponensdiagram
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                   Felhasználói böngésző                     │
+│  Blade HTML + Alpine.js + Livewire XHR + Laravel Echo WS    │
+└──────────────────────┬──────────────────────┬───────────────┘
+                       │ HTTPS                │ WSS (WebSocket)
+┌──────────────────────▼──────────────────┐  ┌▼──────────────────┐
+│  Laravel 12 (Octane/Swoole)             │  │  Laravel Reverb   │
+│                                         │  │  (WebSocket :8080) │
+│  ┌──────────────┐  ┌─────────────────┐  │  └────────┬──────────┘
+│  │ Livewire 3   │  │  Controllers /  │  │           │
+│  │ (reaktív UI) │  │  Routes         │  │           │
+│  └──────┬───────┘  └────────┬────────┘  │           │
+│         └────────┬──────────┘           │           │
+│                  │                      │           │
+│  ┌───────────────▼──────────────────┐   │           │
+│  │  Services / Jobs / Policies      │   │           │
+│  │  Filament Admin / Sanctum Auth   │   │           │
+│  └───────────────┬──────────────────┘   │           │
+└──────────────────┼──────────────────────┘           │
+          ┌────────┼────────────────┬─────────────────┘
+          │        │                │
+┌─────────▼──┐  ┌──▼─────────┐  ┌──▼───────────────┐
+│  MySQL 8   │  │  Redis 7   │  │  Storage (S3)    │
+│ (Eloquent) │  │ (Session / │  │  storage/app/    │
+│ migrations │  │  Queue /   │  │  Exportok/Fájlok │
+│            │  │  Reverb)   │  │                  │
+└────────────┘  └────────────┘  └──────────────────┘
+```
+
+## Főbb adatfolyamok
+
+| Folyamat | Leírás |
+| --- | --- |
+| Bejelentkezés | Böngésző → Blade login form → Laravel Auth → MySQL (User bcrypt jelszóegyeztetés) → Redis session indítás, átirányítás |
+| Tesztfuttatás indítása | Livewire komponens → Service → Eloquent (tesztterv \+ journey version JOIN) → Livewire re-render |
+| Eredmény rögzítése | Livewire `saveResult()` action → Form Request validáció → `TestResultService::save()` → Eloquent INSERT → opcionálisan `dispatch(new CreateIssueJob())` → Jira/Redmine HTTP API |
+| Exportálás | Controller → `dispatch(new GenerateExportJob($run))` → Redis queue → Supervisor worker → PDF/Excel generálás → `Storage::put()` → `Storage::temporaryUrl()` visszaküldve |
+| Valós idejű értesítés (Reverb) | Alkalmazás → `broadcast(new Event())` → Redis pub/sub → Reverb WebSocket szerver → Laravel Echo (kliens) → Livewire UI frissítés |
+
+## Reverb WebSocket architektúra
+
+A Laravel Reverb egy önálló, hosszan futó PHP folyamat, amelyet Supervisor felügyel. A Reverb **Pusher-kompatibilis protokollt** implementál — ezért a kliens oldalon `pusher-js` \+ Laravel Echo használható.
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│                    Laravel Octane                       │
+│                                                         │
+│  broadcast(new TestRunUpdated($run))                    │
+│       │                                                 │
+│       ▼                                                 │
+│  BroadcastServiceProvider → RedisDriver                 │
+│       │                                                 │
+│       ▼                                                 │
+│  Redis PUBLISH "reverb:channel-name" payload            │
+└───────────────────────────┬─────────────────────────────┘
+                            │ Redis pub/sub
+┌───────────────────────────▼─────────────────────────────┐
+│               Laravel Reverb (:8080)                    │
+│                                                         │
+│  SUBSCRIBE "reverb:*" ← Redis                           │
+│  → csatorna azonosítás (private/presence/public)        │
+│  → hitelesítés: POST /broadcasting/auth (Octane-en)     │
+│  → WebSocket PUSH a feliratkozott klienseknek           │
+└───────────────────────────┬─────────────────────────────┘
+                            │ WSS (Nginx proxy /app)
+┌───────────────────────────▼─────────────────────────────┐
+│          Böngésző — Laravel Echo (pusher-js)            │
+│                                                         │
+│  Echo.private('test-run.' + runId)                      │
+│       .listen('TestRunUpdated', (e) => { ... })         │
+│                                                         │
+│  → Livewire.$dispatch('run-updated', e.run)             │
+│  → Livewire komponens újrarenderel                      │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Csatorna típusok az alkalmazásban:**
+
+| Típus | Példa csatorna | Leírás |
+| --- | --- | --- |
+| `public` | `announcements` | Hitelesítés nélkül elérhető |
+| `private` | `private-test-run.{id}` | Csak a hitelesített, jogosult felhasználónak |
+| `presence` | `presence-project.{id}` | Online felhasználók nyilvántartása csatornánként |
+
+## Külső integrációk
+
+<CardGroup cols={2}>
+  <Card title="Issue Trackers" icon="bug" href="/integrations/issue-trackers">
+    Jira és Redmine integrációk hibajegy-kezeléshez.
+  </Card>
+
+  <Card title="Figma" icon="pen-tool" href="/integrations/figma">
+    Tervrajzok csatolása a tesztlépésekhez.
+  </Card>
+</CardGroup>
+
+## Jogosultságkezelési modell
+
+Az Analyse szerepkör-alapú hozzáférés-vezérlést (RBAC) alkalmaz. A szerepkörök és jogosultságok projektszinten kerülnek hozzárendelésre, részletek az [Igazgatási rendszertervben](/technologia/igazgatasi-rendszerterv) találhatók.

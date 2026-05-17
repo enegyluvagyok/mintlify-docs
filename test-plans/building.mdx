@@ -1,0 +1,72 @@
+---
+title: "Töltsd fel az aktív teszttervedet a Teszttervezővel"
+description: "Útmutató: Verziók kiválasztása a projektfából és hozzáadásuk az aktív tervhez a Test Plan Builderben."
+---
+
+A Tesztterv-készítő vizuális módot kínál arra, hogy kiválaszd, mely journey verziók tartoznak az aktív teszttervbe. A bal oldalon böngészheted a projekt moduljainak és journey-jeinek fáját; a jobb oldalon látod a kiválasztott csomóponthoz tartozó verziókártyákat. Egy verzió bepipálása hozzáadja azt a tervhez; a pipa kivétele eltávolítja.
+
+## Első lépések
+
+<Steps>
+  <Step title="Navigálj a készítőhöz">
+    Menj a **Tesztterv-készítő** menüpontra az oldalsávban. A készítő automatikusan betölti a jelenlegi projekt aktív teszttervét.
+
+    <Info>
+      Ha a projektednek nincs aktív terve, a készítő nem tud módosításokat menteni. Előbb hozz létre és aktiválj egy tervet a **Teszttervek** listából.
+    </Info>
+  </Step>
+  <Step title="Válassz ki egy csomópontot a projekttfában">
+    A bal panel megjeleníti a projekted hierarchiáját, moduljait és az egyes modulokban lévő journey-ket. Kattints bármelyik csomópontra a tartalmának betöltéséhez:
+
+    - **Projekt csomópont** — betölti az összes verziót a projekt minden journey-jéből.
+    - **Modul csomópont** — betölti az összes verziót az adott modul minden journey-jéből.
+    - **Journey csomópont** — csak az adott journey-hez tartozó verziókat tölti be.
+
+    A jobb oldali verziókártyák azonnal frissülnek, amikor egy csomópontra kattintasz.
+  </Step>
+  <Step title="Verziók bepipálása vagy kivétele">
+    Minden verziókártyán van egy jelölőnégyzet.
+
+    - **Pipálj be** egy verziót, hogy hozzáadd az aktív tervhez.
+    - **Vedd ki a pipát** egy verzióból, hogy eltávolítsd az aktív tervből.
+
+    Egy bepipált verzión megjelenik a tervhez adás dátuma.
+
+    <Tip>
+      A modul vagy projekt szintjén való bepipálás egyszerre mutatja az összes verziót, megkönnyítve a széles hatókörű lefedettség áttekintését az egyéni kiválasztás előtt.
+    </Tip>
+  </Step>
+  <Step title="Szűrés csak a kijelölt elemekre">
+    Ha arra szeretnél fókuszálni, amit már hozzáadtál a tervhez, kapcsold be a **Csak a kijelöltek megjelenítése** szűrőt a verziókártyák felett. Ez elrejti a nem kijelölt verziókat, hogy zavaró elem nélkül tekinthess végig az aktuális terv tartalmán.
+  </Step>
+  <Step title="Tömeges kijelölési műveletek használata">
+    Két tömeges művelet vonatkozik az összes jelenleg látható verziókártyára:
+
+    - **Az összes látható kijelölése** — bepipál minden, a jobb panelen jelenleg látható verziókártyát, és hozzáadja őket az aktív tervhez.
+    - **Az összes látható kijelölés megszüntetése** — kiveszi a pipát minden látható verziókártyából, és eltávolítja azokat az aktív tervből.
+
+    Ezek a műveletek figyelembe veszik a **Csak a kijelöltek megjelenítése** szűrőt, tehát csak a látható elemeket érintik.
+
+    <Warning>
+      Az összes látható elem kijelölésének megszüntetése azonnal eltávolítja azokat az aktív tervből. Ez a művelet nem vonható vissza a felhasználói felületen — az egyéni verziókat újra be kellene pipálni.
+    </Warning>
+  </Step>
+  <Step title="A terv mentése">
+    Amikor elégedett vagy a kijelöléssel, kattints a **Mentés** gombra. Az Analyse elmenti az összes bepipált elemet az aktív tervbe, és e-mail-értesítéseket küld a hozzárendelt tesztelőknek.
+
+    Egy sikeres értesítés megerősíti, hogy a terv el lett mentve.
+  </Step>
+</Steps>
+
+## Mi kerül mentésre
+
+Amikor mented a tervet, az Analyse a meglévő tervelemet a bepipált verziók aktuális készletével váltja fel. Minden mentett elem rögzíti:
+
+- a journey verziót
+- a végrehajtási sorrendet (az elemek hozzáadásának sorrendje alapján)
+- a hozzárendelt tesztelőt, ha be lett állítva
+- **függőben** státuszt, készen a végrehajtásra
+
+<Note>
+  A terv mentése e-mail-értesítéseket indít el. A hozzárendelés és értesítések működésének részleteiért lásd: [Tesztelők hozzárendelése](/test-plans/assigning).
+</Note>

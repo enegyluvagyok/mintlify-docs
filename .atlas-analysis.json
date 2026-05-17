@@ -1,0 +1,82 @@
+{
+  "projectType": "saas",
+  "projectName": "Analyse",
+  "projectDescription": "A web-based test management platform for organizing user journey test cases, building test plans, executing test runs, and tracking results across projects and releases.",
+  "theme": "almond",
+  "primaryColor": "#fc2c24",
+  "lightColor": "#040404",
+  "darkColor": "#e29d78",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "concepts"
+            ]
+          },
+          {
+            "group": "Projects & Structure",
+            "pages": [
+              "projects/overview",
+              "projects/modules",
+              "projects/journeys",
+              "projects/journey-versions"
+            ]
+          },
+          {
+            "group": "Test Planning",
+            "pages": [
+              "test-plans/overview",
+              "test-plans/building",
+              "test-plans/assigning"
+            ]
+          },
+          {
+            "group": "Test Execution",
+            "pages": [
+              "test-runs/overview",
+              "test-runs/running",
+              "test-runs/results"
+            ]
+          },
+          {
+            "group": "Integrations & Settings",
+            "pages": [
+              "integrations/issue-trackers",
+              "integrations/figma",
+              "integrations/export-import",
+              "settings/custom-fields",
+              "settings/releases"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Hierarchical project structure: Projects → Modules → Journeys → Versions",
+    "Test plan builder with visual journey selection and tester assignment",
+    "Interactive test runner with pass/fail/blocked/skipped tracking",
+    "PDF and Excel export of journey versions and test reports",
+    "Excel-based bulk import of journey steps",
+    "Jira and Redmine issue tracker integrations",
+    "Figma design integration for test steps",
+    "Release management linked to test runs",
+    "Custom fields and event schema definitions",
+    "Role-based access control for teams"
+  ],
+  "publicApiSurface": [
+    "GET /exports/journey-versions/{id}/report.pdf",
+    "GET /exports/journey-versions/{id}/report.xlsx",
+    "GET /exports/journey-versions/{id}/steps-template.xlsx",
+    "POST /imports/journey-versions/{id}/steps",
+    "GET /admin/journey-versions/{id}/details",
+    "POST /cmp/config/fetch",
+    "POST /sidebar/reorder"
+  ]
+}

@@ -1,0 +1,69 @@
+---
+title: "Mi az Analyse? Egy Journey-alapú tesztmenedzsment eszköz"
+description: "Egy olyan eszköz amelyet QA mérnökök, tesztelők és projektmenedzserek számára fejlesztettünk, akik strukturált módszert igényelnek a szoftvertesztelés lefedéséhez, tervezéséhez és végrehajtásához."
+---
+
+Táblázatok vagy szétszórt dokumentumok kezelése helyett a tesztelési lefedettségedet a termék valódi felhasználói journey-i köré szervezheted — majd egyetlen helyről tervezheted, futtathatod és jelentheted az összes ciklust.
+
+Az Analyse-t különösen hasznos eszköznek találják azok a csapatok, amelyek **Google Analytics bekötést és eseményeket (events) tesztelnek**: a journey-alapú struktúra lehetővé teszi, hogy minden felhasználói folyamathoz pontosan dokumentáld, mely GA4 eseményeknek kell elsülniük, majd futtatásról futtatásra ellenőrizd, hogy az adatküldés valóban helyes-e.
+
+## Kinek szól az Analyse?
+
+Az Analyse olyan csapatoknak készült, amelyek rendszeresen szállítanak szoftvert, és biztosak akarnak lenni abban, hogy minden kiadás megfelelően tesztelt. Ideális:
+
+- **QA mérnököknek**, akik teszteseteket írnak és tartanak karban, és verziókövetést igényelnek hozzájuk
+- **Tesztelőknek**, akiknek egyértelmű feladatkiosztásra, lépésről lépésre szóló utasításokra és egyszerű eredményrögzítési módszerre van szükségük
+- **Projektmenedzsereknek**, akik átláthatóságot szeretnének a tesztelési lefedettség, a futtatási előrehaladás és a kiadásra való felkészültség tekintetében
+- **Analytics csapatoknak**, akik Google Analytics (GA4) bekötést és eseményeket tesztelnek — és biztosítani akarják, hogy minden felhasználói interakcióhoz a megfelelő event sül el
+
+## Mit tehetsz az Analyse-zal?
+
+<CardGroup cols={2}>
+  <Card title="Tesztelési lefedettség szervezése" icon="folder-tree" href="/concepts">
+    Struktúráld a teszteseteidet egy négyszintű hierarchia segítségével: Projektek, Modulok, Journey-k és Journey Verziók. Minden szint a termék egy valódi részét képezi le.
+  </Card>
+
+  <Card title="Teszttervek készítése" icon="clipboard-list" href="/quickstart">
+    Használd a Tesztterv-készítőt, hogy kiválaszd, melyik journey verziókat teszteled egy adott ciklusban, majd egyetlen kattintással rendelj hozzá minden elemet egy csapattaghoz.
+  </Card>
+
+  <Card title="Végrehajtás és eredményrögzítés" icon="circle-play" href="/quickstart">
+    A Tesztfuttató végigvezeti a tesztelőket minden lépésen, és lehetővé teszi az átment, sikertelen, blokkolt vagy kihagyott eredmény rögzítését — lépésenkénti opcionális megjegyzésekkel.
+  </Card>
+
+  <Card title="Riportok exportálása" icon="file-arrow-down" href="/quickstart">
+    Generálj PDF vagy Excel exportokat journey verziókhoz vagy tesztfuttatási eredményekhez, amelyeket megoszthatsz az érdekelt felekkel, vagy megfelelőségi célból archiválhatsz.
+  </Card>
+
+  <Card title="Kiadások nyomon követése" icon="tag" href="/concepts">
+    Kapcsold a tesztfuttatásokat egy Kiadáshoz, hogy pontosan nyomon tudd követni, mi lett tesztelve az egyes telepítések előtt.
+  </Card>
+
+  <Card title="Eszközök összekapcsolása" icon="plug" href="/concepts">
+    Integráld a Jira-t vagy a Redmine-t, hogy közvetlenül egy tesztfuttatásból naplózhass hibákat, és kapcsolj Figma terveket az egyes tesztlépésekhez.
+  </Card>
+
+  <Card title="Google Analytics eventek tesztelése" icon="chart-line" href="/concepts">
+    Dokumentáld journey-nként, mely GA4 eseményeknek kell elsülniük, majd minden futtatásban ellenőrizd, hogy az adatküldés helyes és teljes-e.
+  </Card>
+</CardGroup>
+
+## Hogyan működik a hierarchia?
+
+Az Analyse-ban minden tartalom egy hierarchiában helyezkedik el: **Projekt → Modul → Journey → Journey Verzió → Lépések**. Ez tükrözi a valódi termékek felépítését — egy projekt funkcionális területeket (modulokat) tartalmaz, minden terület felhasználói folyamatokat (journey-ket), és minden folyamatnak verziókövetett, lépésről lépésre haladó tesztesetei vannak.
+
+<Note>
+  A Journey Verziók azok a tényleges tesztesetek, amelyeket végrehajtasz. A vázlat verzió egy folyamatban lévő munkát jelent; a közzétett verzió készen áll arra, hogy bekerüljön egy teszttervbe. Google Analytics tesztelésnél egy-egy Journey Verzió tipikusan egyetlen felhasználói folyamathoz tartozó összes elvárt GA4 eventet tartalmazza lépésenként.
+</Note>
+
+## Kezdj el dolgozni
+
+<CardGroup cols={2}>
+  <Card title="Gyors útmutató" icon="rocket" href="/quickstart">
+    Kövesd a lépésről lépésre haladó útmutatót az első projekted létrehozásához, egy teszteset megírásához és az első teszt futtatásához — percek alatt.
+  </Card>
+
+  <Card title="Alapfogalmak" icon="book-open" href="/concepts">
+    Ismerd meg, mit jelentenek a Projektek, Modulok, Journey-k, Verziók, Teszttervek és Tesztfuttatások az Analyse-ban, mielőtt belevágsz.
+  </Card>
+</CardGroup>

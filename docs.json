@@ -1,126 +1,103 @@
 {
   "$schema": "https://mintlify.com/docs.json",
+  "name": "Analyse",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
-  "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+  "logo": {
+    "light": "https://www.profession.hu/images/logos/4/5/45576_1628516055.png",
+    "dark": "https://www.profession.hu/images/logos/4/5/45576_1628516055.png"
   },
-  "favicon": "/favicon.svg",
+  "favicon": {
+    "light": "https://media.brand.dev/55480c38-4203-413d-8622-69e15c7b6ed1.jpg",
+    "dark": "https://media.brand.dev/55480c38-4203-413d-8622-69e15c7b6ed1.jpg"
+  },
+  "colors": {
+    "primary": "#2353fc",
+    "light": "#5d5b5b",
+    "dark": "#bee378"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/enegyluvagyok/analyse"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Felhasználói kézikönyvek",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Kezdő lépések",
+            "pages": ["introduction", "quickstart", "concepts"]
+          },
+          {
+            "group": "Projektek és Struktúra",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "projects/overview",
+              "projects/modules",
+              "projects/journeys",
+              "projects/journey-versions",
+              "projects/event-scheme"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Teszttervezés",
+            "pages": ["test-plans/overview", "test-plans/building", "test-plans/assigning"]
+          },
+          {
+            "group": "Tesztvégrehajtás",
+            "pages": ["test-runs/overview", "test-runs/running", "test-runs/results"]
+          },
+          {
+            "group": "Integráció és beállítások",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "integrations/issue-trackers",
+              "integrations/figma",
+              "integrations/export-import",
+              "settings/custom-fields",
+              "integrations/cmp",
+              "integrations/activity-log",
+              "integrations/charts"
             ]
           },
           {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/components",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "Agent ready",
-            "pages": [
-              "agent-ready/prompt",
-              "agent-ready/visibility",
-              "agent-ready/contextual",
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
+            "group": "Telepítés",
+            "pages": ["tech/telepitesi-kezikoenyv"]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Technológiai dokumentumok",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Logikai",
             "pages": [
-              "api-reference/introduction"
+              "tech/logikai-rendszerterv",
+              "tech/igazgatasi-rendszerterv",
+              "tech/architekturaterv",
+              "tech/adatbazis-terv"
             ]
           },
           {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
+            "group": "Fizikai",
+            "pages": ["tech/fizikai-rendszerterv"]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
+    ]
+  },
+  "redirects": [
+    {
+      "source": "/test-runs/running",
+      "destination": "test-runs/running",
+      "permanent": true
     }
+  ],
+  "fonts": {
+    "family": "Poppins"
   },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+  "appearance": {
+    "strict": false
   },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
-  }
+  "description": "Analitikai eszközfejlesztési dokumentációk és kézikönyvek"
 }

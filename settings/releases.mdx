@@ -1,0 +1,88 @@
+---
+title: "Releases: track software versions and link test runs"
+description: "Create named release milestones in Analyse and associate test runs with them so you can measure test quality for each version of your product."
+---
+
+Az Analyse-ban egy kiadás a szoftver egy megnevezett verzióját képviseli — egy mérföldkövet, amelyet kiszállítasz vagy tervezel kiszállítani. A tesztfuttatások kiadáshoz kapcsolásával nyilvántartást építesz arról, mit teszteltek, mi volt sikeres és mi volt sikertelen minden verzióban. Ez egyszerűvé teszi a minőség összehasonlítását kiadások között, és megválaszolja az olyan kérdéseket, mint „ez a regresszió a v2.1 előtt vagy után jelent meg?".
+
+## Kiadás létrehozása
+
+<Steps>
+  <Step title="A kiadások megnyitása">
+    Navigálj a **Kiadások** menüpontra az oldalsávban.
+  </Step>
+  <Step title="Kattints az Új kiadás gombra">
+    Kattints az **Új kiadás** gombra a létrehozási űrlap megnyitásához.
+  </Step>
+  <Step title="Adj meg egy nevet">
+    Adj a kiadásnak egy egyértelmű **Nevet** — ez az a felirat, amelyet a csapatod a kiadás azonosítására fog használni (pl. `2025 Q2 UAT`, `42. sprint kiadás`).
+  </Step>
+  <Step title="Verziószring hozzáadása (opcionális)">
+    A **Verzió** mező egy szabad szöveges verzióazonosító (pl. `v2.4.1` vagy `1.0.0-rc2`). Opcionális és elkülönül a névtől, így a nevet emberi olvasásra alkalmas feliratként, a verziót géppel olvasható sztringként használhatod.
+  </Step>
+  <Step title="Státusz beállítása">
+    Válassz egy **Státuszt**, amely tükrözi a kiadás jelenlegi állapotát. Lásd az alábbi [kiadási státuszokat](#kiadási-státuszok).
+  </Step>
+  <Step title="Kiadási dátum beállítása (opcionális)">
+    Add meg a **Kiadva** dátumot, ha a kiadásnak ismert vagy tényleges szállítási dátuma van.
+  </Step>
+  <Step title="Megjegyzések hozzáadása (opcionális)">
+    A **Megjegyzések** mező szabad szöveget fogad el. Használd changelog-összefoglalóhoz, ismert problémákhoz vagy bármilyen, a tesztelők számára hasznos kontextushoz.
+  </Step>
+  <Step title="Mentés">
+    Kattints a **Mentés** gombra. A kiadás most elérhető a projekten belüli tesztfuttatásokhoz való csatoláshoz.
+  </Step>
+</Steps>
+
+## Kiadási státuszok
+
+A kiadások `status` mezőt használnak a kiadás életciklusban elfoglalt helyének közlésére. A kiadás létrehozásakor az alapértelmezett státusz `active`.
+
+| Státusz | Jelentés |
+| --- | --- |
+| `active` | A kiadás folyamatban van vagy tervezett — tesztfuttatások kapcsolódnak hozzá |
+| Egyéb értékek | A csapat által definiált egyéni státuszok; a mező szabad szöveges sztring, nem kötelező enum, rugalmasságot adva a munkafolyamathoz való igazításban |
+
+<Info>
+  A `status` mező szabad szöveges sztring, nem rögzített enum. A csapatod bármilyen értéket használhat, amely illeszkedik a munkafolyamatához (pl. `draft`, `in-testing`, `shipped`, `archived`).
+</Info>
+
+## Tesztfuttatás csatolása kiadáshoz
+
+Tesztfuttatás létrehozásakor vagy szerkesztésekor válaszd ki a cél **Kiadást** a kiadás legördülő menüből. Egyetlen tesztfuttatás egy kiadáshoz tartozik; több tesztfuttatás csatolható ugyanahhoz a kiadáshoz.
+
+<Steps>
+  <Step title="A tesztfuttatás megnyitása">
+    Navigálj a **Tesztfuttatások** menüpontra, és nyiss meg egy meglévő futtatást, vagy hozz létre egy újat.
+  </Step>
+  <Step title="Kiadás kiválasztása">
+    A tesztfuttatás űrlapon válaszd ki a releváns kiadást a **Kiadás** mezőből.
+  </Step>
+  <Step title="Mentés">
+    Mentsd el a tesztfuttatást. Most már kapcsolódik a kiválasztott kiadáshoz.
+  </Step>
+</Steps>
+
+## Miért érdemes kiadásokat használni
+
+<CardGroup cols={2}>
+  <Card title="Tesztfuttatás eredményei" icon="chart-line" href="/test-runs/results">
+    Tekintsd meg a sikeres/sikertelen összefoglalókat, és exportálj jelentéseket minden kiadás tesztfuttatásaihoz.
+  </Card>
+
+  <Card title="Tesztek futtatása" icon="play" href="/test-runs/running">
+    Lépj végig a Tesztfuttatón, és rögzíts eredményeket a kiadásodhoz kapcsolva.
+  </Card>
+
+  <Card title="Teszttervek" icon="clipboard-list" href="/test-plans/overview">
+    Készítsd el és kezeld azokat a tesztterveket, amelyek minden kiadás tesztfuttatásait táplálják.
+  </Card>
+
+  <Card title="Tesztfuttatás áttekintése" icon="calendar-days" href="/test-runs/overview">
+    Értsd meg a futtatási státuszokat, az előrehaladás nyomon követését, és azt, hogyan kapcsolódnak a futtatások a kiadásokhoz.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Hozz létre kiadásokat minden sprint vagy mérföldkő elején, hogy a tesztelők azonnal csatolhassák a futtatásaikat. Ha a ciklus végéig vársz, a tesztfuttatások kiadáskapcsolat nélkül is elmenthetők, ami megnehezíti az utólagos jelentéskészítést.
+</Tip>

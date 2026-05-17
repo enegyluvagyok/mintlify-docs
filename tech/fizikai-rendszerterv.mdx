@@ -1,0 +1,138 @@
+---
+title: "Fizikai rendszerterv"
+description: "A rendszer fizikai infrastruktúrájának részletes leírása, beleértve a hardverelemeket, hálózati topológiát és az adatközponti elrendezést."
+---
+
+A fizikai rendszerterv az Analyse platform mögöttes infrastruktúrájának hardveres és hálózati szempontjait dokumentálja. Ez a dokumentum segít az üzemeltetési és rendszergazdai csapatoknak megérteni, hogyan van fizikailag felépítve a rendszer.
+
+## Hardveres összetevők
+
+A rendszer az alábbi fizikai vagy virtuális infrastruktúra-elemekre épül:
+
+- **Webkiszolgálók** — Nginx (reverse proxy, SSL termináció) \+ Laravel Octane/Swoole (HTTP alkalmazásszerver, `:8000`) \+ Laravel Reverb (WebSocket szerver, `:8080`). Supervisor felügyeli mindhárom folyamatot. Ajánlott minimum konfiguráció: 4 vCPU, 8 GB RAM, 100 GB SSD. PHP 8.2\+ és Swoole extension szükséges; a `vendor/` (~200–500 MB), `node_modules/` (~100–300 MB) és `storage/` mappa írható jogosultsággal kell rendelkezzen. PHP-FPM **nem szükséges**.
+- **Adatbázis-kiszolgálók** — MySQL 8.0\+ adatbázist futtató szerverek. Ajánlott minimum konfiguráció: 8 vCPU, 16 GB RAM, 500 GB SSD (RAID-10 ajánlott). MySQL InnoDB buffer pool mérete: RAM 50–70%-a (pl. 8–10 GB).
+- **Redis-kiszolgáló** — Laravel Cache, Session driver, Queue backend és Laravel Reverb broadcast bus. Ajánlott minimum konfiguráció: 2 vCPU, 4 GB RAM (dedikált vagy a webszerverrel megosztva kis terhelés esetén). Supervisor felügyeli a `php artisan queue:work` és `php artisan reverb:start` processeket.
+- **Fájltároló** — Statikus fájlok, exportok (PDF, Excel) és mellékletek tárolására. S3-kompatibilis objektumtároló (pl. MinIO) vagy NAS. Becsült méret: ~50 GB/év közepes használat esetén.
+- **Terheléselosztó** — A bejövő forgalmat elosztja a webkiszolgálók között. Szoftveres Nginx 1.24\+ (ajánlott) vagy hardveres megoldás (pl. F5, HAProxy).
+
+## Hálózati topológia
+
+```text
+[Internet]
+    |
+[Tűzfal / DMZ]
+    |
+[Terheléselosztó]
+   /         \
+[Web-1]    [Web-2]
+    \         /
+  [Belső hálózat]
+        |
+   [Adatbázis]
+        |
+  [Fájltároló]
+```
+
+## Hálózati szegmensek
+
+| Szegmens | Cím tartomány | Leírás |
+| --- | --- | --- |
+| DMZ | 10.0.1.0/24 | Nyilvánosan elérhető réteg |
+| Alkalmazásréteg | 10.0.2.0/24 | Webkiszolgálók és API-ok |
+| Adatréteg | 10.0.3.0/24 | Adatbázis és tároló |
+
+## Redundancia és rendelkezésre állás
+
+- **Aktív–aktív terheléselosztás** a webkiszolgálók között
+- **MySQL master–replica replikáció** (binlog-alapú, GTID móddal) a leállás kockázatának csökkentésére; olvasási kérések a replikára irányíthatók
+- **Automatikus feladatátvétel** (failover) konfigurálása javasolt a kritikus komponensekhez
+- **Mentések** napi `mysqldump` vagy Percona XtraBackup segítségével, külső helyszíni tárolással; a `storage/app/` mappa (feltöltések és exportok) is mentésbe kerül
+
+## Backend (PHP) függőségek
+
+A backend PHP 8.2\+ és Composer csomagkezelőt igényel.
+
+### Éles függőségek (require)
+
+| Csomag | Verzió | Leírás |
+| --- | --- | --- |
+| `laravel/framework` | ^12.0 | Laravel alkalmazáskeretrendszer |
+| `laravel/octane` | ^2.13 | Nagy teljesítményű alkalmazásszerver (Swoole/RoadRunner) |
+| `laravel/reverb` | ^1.6 | Laravel WebSocket szerver (broadcast backend) |
+| `laravel/sanctum` | ^4.2 | API token és SPA hitelesítés |
+| `laravel/tinker` | ^2.10.1 | Interaktív REPL konzol |
+| `filament/filament` | ^4.0 | Admin panel framework |
+| `pxlrbt/filament-activity-log` | \* | Filament aktivitásnapló integráció |
+| `wsmallnews/filament-nestedset` | 2.0.1 | Fa-struktúrájú adatok Filament panelben |
+| `spatie/laravel-permission` | ^6.21 | Szerepkör- és jogosultságkezelés |
+| `spatie/laravel-activitylog` | ^4.10 | Tevékenységnapló |
+| `maatwebsite/excel` | ^3.1 | Excel import/export |
+| `phpoffice/phpspreadsheet` | ^1.30 | Táblázatkezelő könyvtár (Excel alap) |
+| `barryvdh/laravel-dompdf` | ^3.1 | PDF generálás |
+| `blade-ui-kit/blade-heroicons` | ^2.6 | Heroicons Blade komponensek |
+| `railsware/mailtrap-php` | ^3.9 | Mailtrap e-mail küldési SDK |
+
+### Fejlesztői függőségek (require-dev)
+
+| Csomag | Verzió | Leírás |
+| --- | --- | --- |
+| `phpunit/phpunit` | ^11.5.3 | Unit és feature tesztelés |
+| `laravel/sail` | ^1.41 | Docker alapú fejlesztői környezet |
+| `laravel/pint` | ^1.25 | PHP kódstílus-formázó |
+| `laravel/pail` | ^1.2.2 | Valós idejű log viewer |
+| `nunomaduro/collision` | ^8.6 | Szép CLI hibajelentés |
+| `barryvdh/laravel-ide-helper` | ^3.6 | IDE autocomplete segédeszköz |
+| `fakerphp/faker` | ^1.23 | Tesztadat-generátor |
+| `mockery/mockery` | ^1.6 | Mock objektumok teszteléshez |
+| `squizlabs/php_codesniffer` | ^4.0 | PHP kódminőség-ellenőrző |
+| `swoole/ide-helper` | ^6.0 | Swoole IDE támogatás (Octane) |
+
+### Hasznos Composer scriptek
+
+| Parancs | Leírás |
+| --- | --- |
+| `composer dev` | Fejlesztői szerver indítása (Laravel serve \+ queue \+ pail \+ Vite párhuzamosan) |
+| `composer test` | Tesztek futtatása (`php artisan test`) |
+
+## Frontend függőségek
+
+A frontend build eszközök és függőségek Node.js környezetet igényelnek (ajánlott: Node.js 20 LTS\+).
+
+### Build eszközök (devDependencies)
+
+| Csomag | Verzió | Leírás |
+| --- | --- | --- |
+| `vite` | ^7.0.4 | Frontend build eszköz és fejlesztői szerver |
+| `laravel-vite-plugin` | ^2.0.0 | Laravel–Vite integráció |
+| `tailwindcss` | ^4.0.0 | CSS utility framework |
+| `@tailwindcss/vite` | ^4.0.0 | Tailwind CSS Vite plugin |
+| `axios` | ^1.11.0 | HTTP kliens (AJAX kérések) |
+| `laravel-echo` | ^2.2.4 | WebSocket/broadcast kliens |
+| `pusher-js` | ^8.4.0 | Pusher JavaScript SDK (Laravel Echo backend) |
+| `concurrently` | ^9.0.1 | Párhuzamos npm scriptek futtatása |
+
+### Runtime függőségek (dependencies)
+
+| Csomag | Verzió | Leírás |
+| --- | --- | --- |
+| `toastr` | ^2.1.4 | Értesítési (toast) könyvtár |
+| `node-fetch` | ^3.3.2 | Node.js HTTP fetch implementáció |
+| `fetch` | ^1.1.0 | Fetch polyfill |
+| `playwright` | ^1.56.0 | Böngészőalapú tesztelési eszköz |
+
+### Build folyamat
+
+- **Fejlesztői módban:** `npm run dev` (Vite HMR szerver)
+- **Éles build:** `npm run build` → a lefordított fájlok a `public/build/` mappába kerülnek
+- Az éles szerveren csak a `public/build/` mappa szükséges; a `node_modules/` nem kell deployolni
+
+## Fizikai helyszín
+
+<Info>
+  A telepítési helyszínre és az adatközponti követelményekre vonatkozó pontos specifikációkat a szervezet üzemeltetési szabályzata tartalmazza.
+</Info>
+
+- Az ajánlott megoldás ISO 27001 tanúsítással rendelkező adatközpont
+- Redundáns áramellátás (UPS \+ generátor)
+- Klimatizált géperemek, 18–27 °C közötti hőmérsékleten
+- Fizikai beléptető rendszer és kamera-megfigyelés

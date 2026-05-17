@@ -1,0 +1,83 @@
+---
+title: "Tesztfuttatások: tesztterv-végrehajtás nyomon követése"
+description: "A test run (tesztfuttatás) egy tesztterv végrehajtása egy adott időpontban. Ismerje meg a futtatási állapotokat, az előrehaladás követését, valamint azt, hogy a futtatások hogyan kapcsolódnak a kiadásokhoz és a környezetekhez."
+---
+
+A tesztfuttatás egy tesztterv egyszeri végrehajtása. Minden alkalommal, amikor a csapatod végigmegy egy terv tesztesetein — legyen az egy új kiadáshoz, egy gyorsjavításhoz vagy egy regressziós ciklushoz — az Analyse ezt a munkát külön futtatásként rögzíti. Ugyanazt a tervet annyiszor futtathatod, amennyiszer szükséges, kiadásokra és környezetekre kiterjedő eredményelőzményt építve fel.
+
+## Mit tartalmaz egy tesztfuttatás
+
+Amikor létrehozol egy tesztfuttatást, nevet adsz neki, és opcionálisan további kontextushoz kapcsolod. A futtatás ezután a teszttervben szereplő minden journey verzióhoz tartalmaz egy eredményelemet.
+
+| Mező | Leírás |
+| --- | --- |
+| **Név** | A futtatást azonosító felirat (pl. „24. sprint regresszió") |
+| **Környezet** | A tartományi környezet, ahol a tesztelés zajlott (pl. staging, production) |
+| **Kiadás** | A szoftverkiadás, amelyet ez a futtatás validál |
+| **Eszközök** | A futtatás során használt egy vagy több teszteszköz (pl. Chrome asztali, iPhone Safari) |
+| **Megjegyzés** | Az egész futtatáshoz csatolt szabad szöveges megjegyzés |
+| **Kezdési / befejezési időpont** | Időbélyegek, amelyek jelzik, mikor kezdődött és ért véget a futtatás |
+
+A környezet, kiadás és eszközök opcionálisak. A hozzákapcsolásuk szűrési és összehasonlítási lehetőséget biztosít a futtatások között.
+
+## Futtatási státuszok
+
+Az Analyse automatikusan kiszámítja egy futtatás státuszát az elemek eredményei alapján. Kézzel nem állítható be.
+
+<CardGroup cols={2}>
+  <Card title="Sikeres" icon="circle-check" href="/test-runs/results">
+    A futtatás minden eleme sikeres eredménnyel zárul. A futtatás befejezett, és nem rögzítettünk sikertelenségeket.
+  </Card>
+
+  <Card title="Sikertelen" icon="circle-xmark" href="/test-runs/results">
+    Legalább egy elem sikertelen eredménnyel zárul. A futtatás figyelmet igényel, mielőtt a kiadás folytatódhat.
+  </Card>
+
+  <Card title="Blokkolt" icon="ban" href="/test-runs/results">
+    Egyetlen elem sem volt sikertelen, de legalább egy elem blokkolt. Egy függőség vagy környezeti probléma akadályozza a befejezést.
+  </Card>
+
+  <Card title="Függőben" icon="clock" href="/test-runs/running">
+    A futtatás folyamatban van. Néhány elemet még nem hajtottak végre.
+  </Card>
+</CardGroup>
+
+<Note>
+  A státusz elsőbbségi sorrendje: **sikertelen** \> **blokkolt** \> **sikeres** \> **függőben**. Egyetlen sikertelen elem is sikertelenné teszi az egész futtatást, függetlenül attól, hány elem volt sikeres.
+</Note>
+
+## Az előrehaladás kiszámítása
+
+Az előrehaladás azoknak az elemeknek a százalékos aránya, amelyek lezáró eredményt kaptak. Az elvégzettként számlált elemek azok, amelyeknek **sikeres**, **sikertelen**, **kihagyott** vagy **érvénytelen** az eredménye. A még függőben lévő elemek nem számítanak bele az előrehaladásba.
+
+```text
+Előrehaladás = (elvégzett elemek / összes elem) × 100
+```
+
+A 100%-os előrehaladású futtatás nem feltétlenül jelenti azt, hogy sikeres volt — azt jelenti, hogy minden elemet értékeltek. A státusz mondja meg, hogy az eredmény jó volt-e.
+
+## Elemeredmények
+
+Egy futtatás minden eleme ötféle eredmény valamelyikével rendelkezhet:
+
+| Eredmény | Jelentés |
+| --- | --- |
+| **Sikeres** | A teszteset sikeresen lefutott a várt eredménnyel |
+| **Sikertelen** | A teszteset váratlan vagy helytelen eredményt produkált |
+| **Blokkolt** | A tesztelés nem folytatható függőség, környezeti probléma vagy előfeltétel-meghibásodás miatt |
+| **Kihagyott** | A tesztesetet szándékosan nem hajtották végre ebben a futtatásban |
+| **Érvénytelen** | A teszteset nem értékelhető (pl. a lépések elavultak vagy nem alkalmazhatók) |
+
+## Egy terv, sok futtatás
+
+Egy teszttervnek tetszőleges számú futtatása lehet. Ugyanazon terv több kiadással szembeni futtatása lehetővé teszi a minőségi trendek időbeli nyomon követését. Létrehozhatsz egy futtatást kiadásjelöltenként, vagy külön futtatást minden célkörnyezethez.
+
+<CardGroup cols={2}>
+  <Card title="Teszt futtatása" icon="play" href="/test-runs/running">
+    Lépj végig a teszteseteken, és rögzítsd az eredményeket a Tesztfuttatóban.
+  </Card>
+
+  <Card title="Eredmények megtekintése" icon="chart-bar" href="/test-runs/results">
+    Tekintsd meg az összefoglalókat, exportálj jelentéseket, és hasonlítsd össze a futtatásokat kiadások között.
+  </Card>
+</CardGroup>

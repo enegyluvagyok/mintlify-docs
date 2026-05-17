@@ -1,0 +1,131 @@
+---
+title: "Statisztikai chartok: teszteredmények vizualizációja"
+description: "Az Analyse Livewire-alapú, Chart.js-sel rendererelt interaktív diagramokon mutatja a tesztlefedettséget, eredmény-eloszlást és időbeli trendeket. Ismerd meg az elérhető chartokat és az adatforrásukat."
+---
+
+Az Analyse statisztikai nézetei Livewire-komponensek ként épülnek fel, amelyek a Chart.js könyvtárral renderelnek interaktív diagramokat. Az adatok szerver oldalon számítanak ki, a Livewire általá küldött JSON-on keresztül töltődnek be a canvas elembe, és valamelyik szűrő változásakor automatikusan frissítenek.
+
+## Elérhető chartok
+
+### 1. Eredmény-eloszlás (Doughnut / Pie chart)
+
+Megmutatja az adott tesztterven vagy tesztfuttatáson belül az elemek eredmény szerinti megoszlását.
+
+| Szelet | Szín | Jelentés |
+| --- | --- | --- |
+| Sikeres | Zöld | `passed` eredményű elemek |
+| Sikertelen | Piros | `failed` eredményű elemek |
+| Blokkolt | Sárga | `blocked` eredményű elemek |
+| Kihagyott | Szürke | `skipped` eredményű elemek |
+| Érvénytelen | Világos szürke | `invalid` eredményű elemek |
+| Futtatandó | Kék | `not_ran` — még nem végrehajtott elemek |
+
+A diagram közepe az előrehaladfást százalékban mutatja (elvgzett elemek / összes elem).
+
+### 2. Futtatás-trend (Line chart)
+
+Időbeli sorozatként ábrázolja egy adott tesztterv futtatásainak eredményt, kiadásonként vagy dátumonként bontva. Megmutatja, hogy a minőség javul vagy roml-e az idő múlasával.
+
+- **X tengely** — futtatás dátuma vagy kiadás címkéje
+- **Y tengely** — sikeres / sikertelen / blokkolt elemek száma vagy aránya
+- **Vonalak** — külön vonal minden eredménytípushoz
+
+### 3. Modul-szintű lefedettség (Bar chart)
+
+Modulonként mutatja a tesztlefedettséget: hány journey verzió szerepel legalább egy aktiv tesztterven, és azok mekkora hányadát hajtották már végre.
+
+- **X tengely** — modulok neve
+- **Y tengely** — verziószám
+- **Sávok** — két réteg: tervbe vett vs. végrehajtott
+
+### 4. Platform-hiba eloszlás (Bar chart)
+
+Megmutatja, hogy az egyes platformokon (Android / iOS / Web) hány `invalid`, `not_ran` és `blocked` platform-hibát rögzítettek egy adott futtatásban vagy időszakban.
+
+- **X tengely** — platform (Android, iOS, Web)
+- **Y tengely** — hibák száma
+- **Sávcsoportok** — hibatípusonként színezéssel
+
+## Hogyan működnek a chartok
+
+Minden chart egy dedikált Livewire-komponens, amely:
+
+1. Szerver oldalon előállítja az adathalmazt az Eloquent modelleken keresztül
+2. A készített adatot `labels` és `datasets` kulcsok alá rendezi, Chart.js-kompatibilis JSON formátban
+3. A JSON-t Livewire esemkényen keresztül (`$dispatch`) küldi el a front-endnek
+4. Az Alpine.js / JavaScript event listener fogadja az adatot és frissíti a `<canvas>` elem Chart.js példányát
+
+```js
+// Példa: Livewire esemkény fogadása és chart frissítése
+window.addEventListener('chartDataUpdated', event => {
+    myChart.data = event.detail;
+    myChart.update();
+});
+```
+
+## Szűrők és interakció
+
+A chartok oldalon elérhető szűrők:
+
+| Szűrő | Hatás |
+| --- | --- |
+| **Projekt** | Csak az adott projekthez tartozó adatokat mutatja |
+| **Tesztterv** | Az eredmény-eloszlás és trend szűkíthető egy adott tervre |
+| **Kiadás** | A trend chart kiadás-szűrhető |
+| **Dátumtartomány** | Az időbeli adatok korlátozhatók kezdő és záró dátummal |
+| **Platform** | A platform-hiba chart platformra szűkíthető |
+
+A szűrők változásakor a Livewire-komponens automatikusan újraszámítja az adatokat és frissíti a chartot — oldalbetöltés nélkül.
+
+## Adatforrás
+
+A chartok adatai az alábbi táblákból származnak:
+
+| Chart | Elsődleges adatforrás |
+| --- | --- |
+| Eredmény-eloszlás | `test_run_items.result` |
+| Futtatás-trend | `test_runs.created_at`, `test_run_items.result` |
+| Modul-lefedettség | `modules`, `journeys`, `journey_versions`, `test_plan_items` |
+| Platform-hiba | `test_run_item_platform_kv.status` (vagy `virtual_steps` JSON) |
+
+<Note>
+  A chartok csak azokat az adatokat tartalmazzk, amelyekhez a bejelentkezett felhasználónak hozzáférése van. A projekt-szintű jogosultságok automatikusan érvényesülnek.
+</Note>
+
+## Chart.js integráció
+
+Az Analyse a Chart.js `4.x` verzióját használja. A chartok `<canvas>` elementekbe renderelnek, az inicializáció a `livewire:init` esemkény után történik, hogy a Livewire által injektált adatok már rendelkezésre álljanak:
+
+```js
+document.addEventListener('livewire:init', () => {
+    const ctx = document.getElementById('resultChart').getContext('2d');
+    window.resultChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: window.__chartData ?? { labels: [], datasets: [] },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+});
+```
+
+A Livewire `morphed` hook gondoskodik arról, hogy a chart az oldal részleges frissítése után is helyesen jelenjen meg.
+
+<CardGroup cols={2}>
+  <Card title="Tesztfuttatási eredmények" icon="chart-bar" href="/test-runs/results">
+    Az eredményösszefoglalók és a chartok élő nézete a futtatás oldalán.
+  </Card>
+
+  <Card title="Tevékenységnapló" icon="scroll" href="/integrations/activity-log">
+    Ki mit csinált az Analyse-ban — eseménynapló az activity\_log tábla alapján.
+  </Card>
+
+  <Card title="Kiadások" icon="tag" href="/settings/releases">
+    Kiadásokhoz kötött tesztfuttatások trend chartja.
+  </Card>
+
+  <Card title="Tesztfuttatások áttekintése" icon="flag" href="/test-runs/overview">
+    Futási státuszok és előrehaladás-számítás.
+  </Card>
+</CardGroup>

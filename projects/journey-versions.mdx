@@ -1,0 +1,131 @@
+---
+title: "Journey verziók: készíts, publikálj és exportálj teszteseteket."
+description: "Készíts és publikálj verziózott journey pillanatképeket, adj hozzá vagy tömegesen importálj teszteseteket, adj hozzá metaadatokat, és készíts riportokat PDF-ben, Excelben."
+---
+
+A journey verzió egy journey tesztlépéseinek teljes, verziózott pillanatképe. Míg maga a journey a felhasználói folyamat stabil rekordja, a verzió pontosan azt rögzíti, amit egy adott időpontban tesztelni kell. Ugyanazon journey több verzióját is fenntarthatod egyszerre — például egy közelgő kiadáshoz készülő vázlatot és egy teszttervekben aktívan használt közzétett verziót.
+
+## Verzió létrehozása
+
+<Steps>
+  <Step title="Egy journey megnyitása">
+    Navigálj a projekthez, majd a modulhoz, majd a verziózni kívánt journey-hez.
+  </Step>
+  <Step title="Kattints az Új verzió gombra">
+    A journey részletoldalán kattints az **Új verzió** gombra.
+  </Step>
+  <Step title="A verziófelirat beállítása">
+    Add meg a **Verzió** sztringet — ez szabad szöveg, tehát használd bármilyen konvenciót, amelyet a csapatod követ (pl. `v1.0`, `2024-Q2`, `ujratervezes-utan`). A feliratnak egyedinek kell lennie a szülő journey-n belül.
+  </Step>
+  <Step title="Vázlat vagy közzétett kiválasztása">
+    Kapcsold be a **Vázlat** kapcsolót, hogy folyamatban lévő munkaként mentsd el a verziót. Hagyd kikapcsolva (vagy adj hozzá egy **Közzétéve** időbélyeget), hogy a verziót teszttervekben való használatra készként jelöld.
+  </Step>
+  <Step title="Metaadatok hozzáadása (opcionális)">
+    Csatolj tetszőleges JSON-t a **Metaadatok** mezőhöz, ha strukturált kontextust szeretnél tárolni a verzió mellett (pl. célkörnyezet, kapcsolódó jegyek azonosítói).
+  </Step>
+  <Step title="Mentés">
+    Kattints a **Verzió létrehozása** gombra. Most már hozzáadhatsz tesztlépéseket.
+  </Step>
+</Steps>
+
+## Vázlat vs. közzétett
+
+<Tabs>
+  <Tab title="Vázlat">
+    A vázlat verzió egy folyamatban lévő munka. Vázlatot használj, amikor még szerkeszted vagy felülvizsgálod a lépéseket. A vázlat verziók láthatók a Tesztterv-készítőben, de egyértelműen hiányosként vannak megjelölve.
+  </Tab>
+  <Tab title="Közzétett">
+    Egy közzétett verzióban a **Vázlat** kapcsoló ki van kapcsolva és be van állítva egy **Közzétéve** időbélyeg. A közzétett verziók véglegesített tesztspecifikációkat képviselnek, amelyek készen állnak egy teszttervben való végrehajtásra.
+  </Tab>
+</Tabs>
+
+<Info>
+  Önmagában egy **Közzétéve** dátum beállítása nem jelöli automatikusan a verziót közzétettként. A **Vázlat** kapcsolót is ki kell kapcsolni a közzétett állapotba való átlépéshez.
+</Info>
+
+## Verziómezők
+
+| Mező | Kötelező | Megjegyzések |
+| --- | --- | --- |
+| Verzió | Igen | Szabad szöveges felirat, journey-nként egyedi (pl. `v1.0`, `2024-01`) |
+| Vázlat | Igen | Kapcsoló — bekapcsolt állapot esetén folyamatban lévő munka, kikapcsolt esetén közzétett |
+| Közzétéve | Nem | Időbélyeg, amely rögzíti, mikor véglegesítették a verziót |
+| Metaadatok | Nem | Tetszőleges JSON további kontextushoz |
+
+## Tesztlépésekkel való munka
+
+A lépések azok az egyéni műveletek és ellenőrzések, amelyek egy verziót alkotnak. Sorrendezhetők és beágyazhatók — egy lépésnek lehetnek alárendelt lépései, amelyek egy részfolyamatot vagy csoportosított interakciót képviselnek.
+
+Minden lépés tartalmát **meta kulcs-érték párokként** tárolja. A beépített meta kulcsok:
+
+| Meta kulcs | Leírás |
+| --- | --- |
+| `definition` | A leírt művelet vagy képernyő |
+| `event_name` | A lépéshez tartozó analitikai vagy követési esemény |
+| `figma_link` | URL a lépés Figma tervéhez |
+| `note` | Szabad szöveges megjegyzések a tesztelőnek |
+| `web` | Webes lefedettségi megjegyzések vagy szelektorok |
+| `ios` | iOS-specifikus lefedettségi megjegyzések |
+| `android` | Android-specifikus lefedettségi megjegyzések |
+
+### Lépések hozzáadása és szerkesztése
+
+Nyisd meg a **Lépések** fület a verzió részletoldalán. Lépéseket egyenként adhatsz hozzá az inline űrlappal, húzással átrendezheted, és beágyazhatod őket szülőlépés beállításával.
+
+### Lépések importálása Excelből
+
+Ha egyszerre nagy számú lépést szeretnél hozzáadni, importálhatod őket táblázatból.
+
+<Steps>
+  <Step title="A lépéssablon letöltése">
+    A verzió részletoldaláról töltsd le az Excel-sablont az **Importálás** menüből. A sablon tartalmazza az összes metamező helyes oszlopfejlécét.
+  </Step>
+  <Step title="A sablon kitöltése">
+    Adj hozzá egy sort minden lépéshez. Mezőnevekként az oszlopfejléceket használd. A beágyazott lépések a szülő oszlop segítségével jelölhetők.
+  </Step>
+  <Step title="A fájl feltöltése">
+    Küldd be a kitöltött `.xlsx` fájlodat az importálási végpontra:
+
+    ```text
+    POST /imports/journey-versions/{id}/steps
+    ```
+
+    A fájlt `multipart/form-data` formátumban csatold. Az Analyse feldolgozza a lapot, és sorrendben létrehozza a lépéseket.
+  </Step>
+</Steps>
+
+<Warning>
+  A lépések importálása felülírja a verzió meglévő lépésadatait. Mielőtt importálást futtatnál, mentsd el az aktuális lépéseket Excel-be exportálva, ha meg szeretnéd őrizni az előző állapotot.
+</Warning>
+
+## Verzió exportálása
+
+Bármelyik verziót exportálhatod **PDF-jelentésként** vagy **Excel-munkafüzetként**. Mindkét formátum tartalmaz egy áttekintőlapot verzió metaadatokkal és egy lépéslapot az összes tesztlépés részletével.
+
+<CardGroup cols={2}>
+  <Card title="PDF-jelentés" icon="file-pdf">
+    Formázott dokumentum, amely alkalmas az érdekelt felekkel való megosztásra vagy jegyhez csatolásra. Töltsd le a verzió részletoldaláról — az URL a `/exports/journey-versions/{id}/report.pdf` mintát követi.
+  </Card>
+
+  <Card title="Excel-munkafüzet" icon="file-excel">
+    Kétlapos munkafüzet áttekintővel és teljes lépéslistával. Hasznos offline felülvizsgálathoz vagy más jelentésekkel való összevonáshoz. Az URL a `/exports/journey-versions/{id}/report.xlsx` mintát követi.
+  </Card>
+</CardGroup>
+
+<Note>
+  Az exportálási URL-ek hitelesített munkamenetet igényelnek. Ha az Analyse-ba bejelentkezve nyitod meg őket böngészőben, a letöltés automatikusan elindul.
+</Note>
+
+## Verzió metaadatok
+
+A **Metaadatok** mező JSON objektumot fogad el, és lehetővé teszi, hogy tetszőleges strukturált adatot csatolj egy verzióhoz. Általános felhasználási esetek:
+
+- Hivatkozás egy külső jegyre vagy specifikációra (`{"jira": "PROJ-123"}`)
+- Célkörnyezet rögzítése (`{"env": "staging"}`)
+- A lépések írásához használt kiadásverzió tárolása (`{"release": "3.4.0"}`)
+
+A metaadatok mindkét exportformátumban, a PDF-ben és az Excelben is megjelennek.
+
+<Tip>
+  Egyezz meg a csapatoddal egy metaadat-sémában, és dokumentáld. A verziók közötti konzisztens kulcsok sokkal könnyebbé teszik a lefedettség szűrését és jelentéskészítését később.
+</Tip>

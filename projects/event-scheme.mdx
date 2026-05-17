@@ -1,0 +1,101 @@
+---
+title: "Eseményséma: analitikai események struktúrájának meghatározása"
+sidebarTitle: "Eseményséma"
+description: "Ismerd meg, mire való az eseményséma az Analyse-ban, hogyan épül fel az alapértelmezett seeder-séma, és hogyan dokumentáld journey lépésenként az elvárt analitikai eseményeket."
+---
+
+Az **eseményséma** (event scheme) egy projektenként konfigurálható struktúra, amely meghatározza, milyen analitikai eseményeket várunk az egyes journey lépéseknél. Az Analyse elsősorban **Google Analytics 4 (GA4)** eseménytesztelésre van optimalizálva, de az eseményséma általánosan használható bármilyen eseményalapú analitikai rendszerhez.
+
+Az eseményséma nem önálló entitás a felhasználói felületen — a journey lépések **meta kulcs-érték párjaiban** él: az `event_name` mező tárolja az adott lépéshez tartozó elvárt eseménynevet, a platformspecifikus mezők (`android`, `ios`) pedig JSON formátumban tárolhatják a részletes eseményparamétereket.
+
+## Mire való az eseményséma?
+
+Ha a csapatod **analitikai követést** tesztel, minden felhasználói interakciónak egy adott journey-ben egy specifikus eseményt kell kiváltania, meghatározott paraméterekkel. Az eseményséma két kérdésre ad választ:
+
+- **Mit** kell elsülnie? → az `event_name` mező
+- **Milyen paraméterekkel?** → az `android`, `ios` vagy `web` mezők JSON tartalma
+
+A tesztelő a Tesztfuttatóban látja ezeket az adatokat, és ellenőrizheti, hogy a valódi implementáció egyezik-e az elvárttal. Ha nem, a lépést sikertelennek jelöli és hibát naplóz.
+
+## Az alap séma (seeder)
+
+Az Analyse egy alapértelmezett eseménysémával indul, amelyet a **seeder** tölt be. Ez a séma a leggyakoribb GA4 eseménytípusokat fedi le.
+
+### Beépített eseménytípusok
+
+| Eseménynév | Leírás | Tipikus paraméterek |
+| --- | --- | --- |
+| `page_view` | Oldal vagy képernyő betöltése | `page_title`, `page_location` |
+| `screen_view` | Mobilalkalmazás-képernyő megjelenítése (GA4 Firebase) | `screen_name`, `screen_class` |
+| `button_tap` | Gomb vagy kattintható elem megérintése | `button_name`, `screen_name` |
+| `form_submit` | Űrlap elküldése | `form_name`, `form_id` |
+| `login` | Bejelentkezési esemény | `method` (pl. `email`, `google`, `sso`) |
+| `sign_up` | Regisztrációs esemény | `method` |
+| `purchase` | Vásárlás befejezése | `transaction_id`, `value`, `currency`, `items` |
+| `add_to_cart` | Termék kosárba helyezése | `currency`, `value`, `items` |
+| `remove_from_cart` | Termék eltávolítása a kosárból | `currency`, `value`, `items` |
+| `view_item` | Termékoldal vagy részletek megtekintése | `currency`, `value`, `items` |
+| `begin_checkout` | Pénztárfolyamat megkezdése | `currency`, `value`, `items` |
+| `search` | Keresési esemény | `search_term` |
+| `select_content` | Tartalom kiválasztása (pl. tab, kategória) | `content_type`, `item_id` |
+| `share` | Tartalom megosztása | `method`, `content_type`, `item_id` |
+| `exception` | Hiba vagy kivétel elsülése | `description`, `fatal` |
+
+### Lépés meta példa
+
+Egy journey lépés `event_name` és platform meta mezőinek tipikus kitöltése:
+
+```json
+// event_name mező
+"button_tap"
+
+// android mező (JSON)
+{
+  "event_id": "btn_login_submit",
+  "screen_name": "LoginScreen",
+  "button_name": "Bejelentkezés"
+}
+
+// ios mező (JSON)
+{
+  "event_id": "btn_login_submit",
+  "screen_class": "LoginViewController",
+  "button_name": "Bejelentkezés"
+}
+```
+
+## Hogyan dokumentálj eseménysémát journey lépésenként?
+
+Minden journey lépésnél töltsd ki az alábbi meta mezőket:
+
+| Meta mező | Mit tölts ide | Példa |
+| --- | --- | --- |
+| `event_name` | Az elvárt GA4 esemény neve | `button_tap` |
+| `android` | Android-specifikus eseményparaméterek JSON-ban | `{"screen_name": "HomeScreen"}` |
+| `ios` | iOS-specifikus eseményparaméterek JSON-ban | `{"screen_class": "HomeViewController"}` |
+| `web` | Webes esemény paraméterei vagy CSS szelektorok | `{"page_location": "/dashboard"}` |
+
+<Note>
+  Nem minden lépéshez szükséges esemény. A statikus ellenőrzési lépéseknél (pl. „Ellenőrizd, hogy az oldal betöltődött") hagyd üresen az `event_name` mezőt. Csak azokhoz a lépésekhez töltsd ki, ahol ténylegesen eseménysülést várunk.
+</Note>
+
+## Összefüggés a tesztfuttatással
+
+A Tesztfuttatóban a tesztelő minden lépésnél látja az elvárt eseménynevet és paramétereket. A tesztelő feladata:
+
+1. Az adott interakciót elvégezni a tesztelendő alkalmazásban
+2. Ellenőrizni, hogy a GA4 DebugView / Firebase Debug / egyéb analitikai eszközben az elvárt esemény valóban elsült-e
+3. Ellenőrizni, hogy az esemény paraméterei egyeznek-e az elvártakkal
+4. Az eredményt rögzíteni: **Sikeres** / **Sikertelen** / **Blokkolt**
+
+Ha egy esemény nem sül el vagy rossz paraméterekkel sül el, a lépést **Sikertelennek** kell jelölni, és opcionálisan Jira/Redmine hibát naplózni.
+
+<Tip>
+  Egyezz meg a csapatoddal az eseményparaméterek formátumában (kulcsnevekben, értéktípusokban) még az eseményséma kialakítása előtt. Egy következetes séma sokkal könnyebbé teszi a futtatásról futtatásra történő összehasonlítást és az eltérések azonosítását.
+</Tip>
+
+## Importálás Excelből
+
+Az eseményneveket és paramétereket tömegesen is importálhatod Excel-sablonból. Az import sablon `Event` oszlopa felel meg az `event_name` meta kulcsnak; az `Android` és `iOS` oszlopok JSON formátumban fogadják az eseményparamétereket.
+
+Bővebben: [Export és import](/integrations/export-import).

@@ -1,0 +1,112 @@
+---
+title: "Tevékenységnapló: ki mit csinált az Analyse-ban"
+description: "Az Analyse a spatie/laravel-activitylog csomagon keresztül naplóz minden fontos eseményt — journey verziók publikálása, tesztfuttatások mentése, hozzárendelések változása és egyéb műveletek. Ismerd meg az activity_log táblát, a naplózott eseményeket és a napló megtekintésének módját."
+---
+
+Az Analyse a [spatie/laravel-activitylog](https://github.com/spatie/laravel-activitylog) csomagot használja az alkalmazáson belüli műveletek naplózásához. Minden naplóbejegyzés rögzíti, hogy **ki** hajtotta végre a műveletet, **min** (az érintett modell), és **mit** tett — strukturált, lekérdezhető formában.
+
+## Az `activity_log` tábla felépítése
+
+A naplóbejegyzések az `activity_log` táblában tárolódnak. A tábla sémája a `spatie/laravel-activitylog` csomag migrációjából épül fel:
+
+| Oszlop | Típus | Leírás |
+| --- | --- | --- |
+| `id` | `bigint` | Automatikusan növekvő elsődleges kulcs |
+| `log_name` | `string` (nullable) | A napló csatornájának neve (pl. `default`, `journey`, `test_run`) — indexelt |
+| `description` | `text` | Az esemény szöveges leírása (pl. `created`, `updated`, `published`) |
+| `subject_type` | `string` (nullable) | A morphable érintett modell osztályneve (pl. `App\Models\JourneyVersion`) |
+| `subject_id` | `bigint` (nullable) | Az érintett modell azonosítója |
+| `causer_type` | `string` (nullable) | A morphable végrehajtó modell osztályneve (általában `App\Models\User`) |
+| `causer_id` | `bigint` (nullable) | A végrehajtó felhasználó azonosítója |
+| `properties` | `json` (nullable) | Tetszőleges extra adat — pl. előző és új értékek, kontextus |
+| `created_at` | `timestamp` | A naplóbejegyzés létrehozásának időpontja |
+| `updated_at` | `timestamp` | Utolsó módosítás időpontja |
+
+<Note>
+  A `subject` és a `causer` mezők **polymorphic** kapcsolatot alkotnak — egyetlen `activity_log` tábla képes bármilyen Eloquent modellhez tartozó eseményt tárolni. A `log_name` oszlop indexelt, így gyors szűrés érhető el csatorna szerint.
+</Note>
+
+## Naplózott események
+
+Az Analyse az alábbi területeken rögzít tevékenységeket:
+
+### Projektek és struktúra
+
+| Esemény | `description` | `subject` |
+| --- | --- | --- |
+| Projekt létrehozása | `created` | `Project` |
+| Modul létrehozása / módosítása | `created` / `updated` | `Module` |
+| Journey létrehozása / módosítása | `created` / `updated` | `Journey` |
+| Journey verzió publikálása | `published` | `JourneyVersion` |
+| Journey verzió lépéseinek importálása | `steps_imported` | `JourneyVersion` |
+
+### Teszttervek és végrehajtás
+
+| Esemény | `description` | `subject` |
+| --- | --- | --- |
+| Tesztterv létrehozása / módosítása | `created` / `updated` | `TestPlan` |
+| Tesztelő hozzárendelése tervhez | `assigned` | `TestPlanItem` |
+| Tesztfuttatás létrehozása | `created` | `TestRun` |
+| Tesztfuttatás mentése | `saved` | `TestRun` |
+| Tesztfuttatás szüneteltetése | `paused` | `TestRun` |
+| Futtatási elem eredményének rögzítése | `result_recorded` | `TestRunItem` |
+
+### Integrációk és beállítások
+
+| Esemény | `description` | `subject` |
+| --- | --- | --- |
+| Hibakövető rendszer hozzáadása / módosítása | `created` / `updated` | `IssueTracker` |
+| Hiba naplózása jegykezelőbe | `issue_logged` | `TestRunItem` |
+| Egyéni mező létrehozása | `created` | `CustomField` |
+
+## A `properties` mező
+
+A `properties` JSON oszlop tetszőleges extra kontextust tárol. A spatie csomag automatikusan feltölti az `attributes` és `old` alkulcsokat, ha a modellen engedélyezett a `LogsActivity` trait:
+
+```json
+{
+  "attributes": {
+    "result": "failed",
+    "note": "A bejelentkezési gomb nem reagált"
+  },
+  "old": {
+    "result": "not_ran",
+    "note": null
+  }
+}
+```
+
+Egyedi naplózásnál az `properties` mező bármilyen kulcs–érték párral bővíthető:
+
+```php
+activity('test_run')
+    ->performedOn($testRun)
+    ->causedBy(auth()->user())
+    ->withProperties(['environment' => 'staging', 'release' => 'v2.4.0'])
+    ->log('saved');
+```
+
+## A napló megtekintése
+
+Az Analyse felhasználói felületen a tevékenységnapló a projekt **Napló** fülén érhető el. A napló szűrhető:
+
+- **Csatorna** (`log_name`) szerint — pl. csak a tesztfuttatásokhoz kapcsolódó bejegyzések
+- **Esemény típusa** (`description`) szerint
+- **Felhasználó** (`causer`) szerint
+- **Dátumtartomány** szerint (`created_at`)
+
+Minden bejegyzésnél megjelenik a végrehajtó neve, az esemény leírása, az érintett modell és az időpont.
+
+<Tip>
+  A `log_name` oszlop indexelt az adatbázisban, így csatorna szerinti szűréskor a lekérdezés gyors marad akkor is, ha a tábla több millió sort tartalmaz.
+</Tip>
+
+## Adatmegőrzés
+
+A naplóbejegyzések nem törlődnek automatikusan. Ha szükséges, a spatie csomag beépített `activitylog:clean` artisan parancsa törli a megadott napnál régebbi bejegyzéseket:
+
+```bash
+php artisan activitylog:clean --days=90
+```
+
+A megőrzési időt a `config/activitylog.php` fájlban is beállíthatod a `delete_records_older_than_days` kulccsal.

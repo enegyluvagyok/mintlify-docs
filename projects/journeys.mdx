@@ -1,0 +1,71 @@
+---
+title: "Journeyk: definiáld és verziózd a felhasználói interakciók útvonalait"
+description: "Tanuld meg mi a journey az Analyse rendszerben, hogyan készítsd el őket, hogyan szervezd almodulokba, hogyan viszonyulnak a verziókhoz amiken tesztet végzel."
+---
+
+Egy journey a termékedben egy egyetlen felhasználói folyamatot képvisel — például **Bejelentkezés SSO-val**, **Pénztár kuponkóddal** vagy **Jelszó visszaállítása e-mailen keresztül**. A journey-k egy modulon belül helyezkednek el, és szülőrekordként szolgálnak az adott folyamat tesztlépéseinek összes verziózott pillanatképéhez. Egyszer hozol létre egy journey-t, majd ahogy a folyamat fejlődik, egy vagy több verzióját készíted el.
+
+## Journey létrehozása
+
+<Steps>
+  <Step title="A modul megnyitása">
+    Menj a projektedhez, nyisd meg a megfelelő modult, és kattints az **Új journey** gombra.
+  </Step>
+  <Step title="A journey adatainak megadása">
+    Adj meg egy **Nevet**, amely egyértelműen azonosítja a felhasználói folyamatot. Opcionálisan adj hozzá egy **Leírást** a kontextushoz. Az Analyse generál egy **Kulcsot** a névből; mentés előtt felülírhatod.
+  </Step>
+  <Step title="Almodul beállítása (opcionális)">
+    Ha a modulod sok journey-t tartalmaz, használd az **Almodul** mezőt, hogy egy második csoportosítási szintet hozz létre a modulon belül. Részletekért lásd az alábbi szakaszt.
+  </Step>
+  <Step title="Mentés">
+    Kattints a **Journey létrehozása** gombra. Most már hozzáadhatsz verziókat a journey részletoldaláról.
+  </Step>
+</Steps>
+
+## Journey-mezők
+
+| Mező | Kötelező | Megjegyzések |
+| --- | --- | --- |
+| Név | Igen | A folyamat emberi olvasásra alkalmas felirata |
+| Kulcs | Igen | Egyedi slug a modulon belül, automatikusan generálódik a névből |
+| Leírás | Nem | Szabad szöveges kontextus, amely leírja, mit fed le a folyamat |
+| Almodul | Nem | Opcionális alcsoportosítási címke(ék) a szülő modulon belül |
+
+## Az almodul mező használata
+
+Az **Almodul** mező egy egyszerű módot kínál journey-k szervezésére egy modulon belül anélkül, hogy külön modult kellene létrehoznod. Soronként egy címkét fogad el — minden sor egy alcsoport-feliratként jelenik meg a journey-listában.
+
+<Tabs>
+  <Tab title="Példa bemenet">
+    ```text
+    Boldog eset
+    Szélső esetek
+    Hibaállapotok
+    ```
+  </Tab>
+  <Tab title="Eredmény a felhasználói felületen">
+    Az azonos almodul értékkel megjelölt journey-k egy csoportba kerülnek az adott felirat alatt a modul nézetben. Egy journey egyszerre egy almodulhoz tartozhat.
+  </Tab>
+</Tabs>
+
+<Info>
+  Az almodul mező tisztán megjelenítési csoportosítás — nem befolyásolja a teszttervek összeállítását vagy a tesztfuttatások hatókörét. Akkor használd, ha egy modul annyira megnőtt, hogy egy sima lista nehezen áttekinthető.
+</Info>
+
+## Journey-k és verziók
+
+A journey a folyamat stabil rekordja; tartalma a **journey verziókban** él. Minden verzió a folyamat tesztlépéseinek egy adott pillanatban rögzített pillanatképe. Egyszerre több verziót is fenntarthatsz — például egy közelgő kiadáshoz készülő vázlatverzió mellett egy jelenleg is használatban lévő közzétett verzió.
+
+<CardGroup cols={2}>
+  <Card title="Journey verziók" icon="code-branch" href="/projects/journey-versions">
+    Hozz létre, kezelj és tegyél közzé verziózott pillanatképeket egy journey tesztlépéseiről.
+  </Card>
+
+  <Card title="Modulok" icon="folder-open" href="/projects/modules">
+    Ismerd meg, hogyan csoportosítják a modulok a journey-ket egy projekten belül.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Adj pontos, cselekvésorientált neveket a journey-knek, amelyek tartalmazzák a tesztelt kulcsváltozatot (pl. „Kosárba tétel — készlethiányos termék"). A homályos nevek, mint a „Kosár teszt", megnehezítik a teszttervek értelmezését első ránézésre.
+</Tip>

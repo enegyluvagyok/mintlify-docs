@@ -1,0 +1,70 @@
+---
+title: "Tesztelők hozzárendelése és értesítése a Tesztterv-készítőben"
+description: "Ismerje meg, hogyan rendelhet csapattagokat az egyes tesztterv-elemekhez, hogyan használhatja a tömeges hozzárendelést (mass assign) a kiterjedt lefedettséghez, és hogyan működik az e-mail értesítések küldése a mentéskor."
+---
+
+Egy tesztelő hozzárendelése egy journey verzióhoz megmondja a csapatodnak, ki felelős az adott teszteset végrehajtásáért. Hozzárendelések nélkül az elemek egy megosztott sorban várakoznak egyértelmű felelős nélkül. Hozzárendelésekkel minden tesztelő egy fókuszált munkalistát és e-mail-értesítést kap a terv mentésének pillanatában.
+
+## Egyéni elem hozzárendelése
+
+A Tesztterv-készítőben minden verziókártyán van egy **felelős legördülő menü**. A legördülő menü felsorolja a projekt összes tagját.
+
+<Steps>
+  <Step title="Válaszd ki a journey vagy modul csomópontot">
+    A bal oldali fában kattints arra a modul-, journey- vagy projektcsomópontra, amelynek verzióit hozzá szeretnéd rendelni. A verziókártyák a jobb oldalon jelennek meg.
+  </Step>
+  <Step title="Pipáld be a verziót, ha még nincs a tervben">
+    Felelős csak olyan verziókhoz rendelhető, amelyek szerepelnek az aktív tervben. Ha a verziókártya nincs bepipálva, előbb pipáld be, hogy hozzáadd a tervhez.
+  </Step>
+  <Step title="Válassz tesztelőt a legördülő menüből">
+    A verziókártyán nyisd meg a felelős legördülő menüt, és válaszd ki a csapattagot, aki végrehajtja ezt a tesztet. A kijelölés azonnal érvényre jut a készítő felületén.
+
+    Meglévő hozzárendelés eltávolításához nyisd meg a legördülő menüt, és válaszd az üres lehetőséget.
+  </Step>
+</Steps>
+
+## Tömeges hozzárendelés: az összes látható elem egyszerre való hozzárendelése
+
+Ha elemek egy nagyobb csoportját kell ugyanahhoz a tesztelőhöz rendelni, használd a **Tömeges hozzárendelés** műveletet a verziókártyák feletti eszköztárban.
+
+<Steps>
+  <Step title="Szűrd a látható elemeket szükség esetén">
+    Használd a **Csak a kijelöltek megjelenítése** kapcsolót, vagy navigálj egy adott modul- vagy journey-csomóponthoz a látható verziókártyák leszűkítéséhez. A tömeges hozzárendelés az összes jelenleg látható kártyára vonatkozik.
+  </Step>
+  <Step title="Nyisd meg a tömeges hozzárendelés legördülő menüjét">
+    Az eszköztárban nyisd meg a **Hozzárendelés** legördülő menüt, és válaszd ki azt a tesztelőt, akit az összes látható elemhez hozzá szeretnél rendelni.
+  </Step>
+  <Step title="Erősítsd meg a hozzárendelést">
+    Az Analyse azonnal frissíti az összes látható tervelem felelősét. Minden kártya tükrözi az új felelős nevét.
+
+    <Tip>
+      A tömeges hozzárendelést többször is futtathatod különböző tesztelők kiválasztásával különböző szűrt nézetekben — például rendeld az A modul összes elemét egy tesztelőhöz, majd válts a B modulra, és rendeld azokat egy másik tesztelőhöz.
+    </Tip>
+  </Step>
+</Steps>
+
+## E-mail-értesítések mentéskor
+
+A hozzárendelések önmagukban nem értesítik a tesztelőket. Az értesítések akkor kerülnek elküldésre, amikor a **Mentés** gombra kattintasz a Tesztterv-készítőben.
+
+Mentéskor az Analyse csoportosítja az összes bepipált tervelemet a hozzárendelt tesztelők szerint, és minden tesztelőnek küld egy e-mailt, amely felsorolja az összes journey verziót, amelyet ebben a tervben hozzájuk rendeltek. Az e-mail tárgya tartalmazza a tesztterv nevét, így a tesztelők azonnal azonosítani tudják a kontextust.
+
+<Info>
+  Csak azok a tesztelők kapnak e-mailt, akiknek van legalább egy hozzárendelt elemük. A hozzárendelés nélküli elemek nem generálnak értesítéseket.
+</Info>
+
+<Warning>
+  Minden egyes alkalom, amikor mented a tervet, az Analyse újraküldi a hozzárendelési e-maileket az összes tesztelőnek, akiknek vannak hozzárendelt elemei. Ha egyetlen szerkesztési munkamenet során többször is mentesz, a tesztelők több e-mailt kapnak. Végezd el a tömeges módosításokat, majd lehetőség szerint egyszer mentsd el.
+</Warning>
+
+## Miért fontos a hozzárendelés
+
+<CardGroup cols={2}>
+  <Card title="Egyértelmű felelősség" icon="user-check" href="/test-plans/overview">
+    Minden tesztelő pontosan tudja, melyik journey verziókért felelős, csökkentve a félreértéseket és a kihagyott lefedettséget.
+  </Card>
+
+  <Card title="Elszámoltathatóság az eredményekben" icon="chart-bar" href="/test-plans/overview">
+    A hozzárendelések visszakapcsolják a tesztvégrehajtás eredményeit az egyéni tesztelőhöz, átláthatóságot adva arra vonatkozóan, ki mit és mikor futtatott.
+  </Card>
+</CardGroup>

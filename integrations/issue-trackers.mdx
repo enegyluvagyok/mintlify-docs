@@ -1,0 +1,192 @@
+---
+title: "Jira vagy Redmine összekapcsolása a hibák naplózásához a sikertelen tesztekből"
+description: "Kapcsold össze a Jirádat vagy a Redmine-t az Analyse projekteddel, így a tesztelők anélkül jelenthetnek egy hibás tesztlépést hibaként a hibakövető rendszeredben, hogy elhagynák a tesztfutást."
+---
+
+Amikor egy tesztlépés sikertelen, az utolsó dolog, amit szeretnél, hogy egy külön hibajelentésbe másold a részleteket. A hibakövető rendszer integrációk lehetővé teszik, hogy közvetlenül egy sikertelen tesztelemből naplózz új hibát — a lépés neve, megjegyzések és kontextus előre ki vannak töltve, és az eredményül kapott jegy URL-je elmentődik a teszteredmény mellé.
+
+## Támogatott hibakövető rendszerek
+
+<CardGroup cols={2}>
+  <Card title="Jira" icon="bug" href="/integrations/issue-trackers">
+    Csatlakozik egy saját üzemeltetésű Jira Server példányhoz Basic Auth hitelesítéssel (felhasználónév és API token/jelszó).
+  </Card>
+
+  <Card title="Redmine" icon="circle-exclamation" href="/integrations/issue-trackers">
+    Csatlakozik a Redmine-hoz API kulccsal. Támogatja a fájlmellékletek feltöltését a hibával együtt.
+  </Card>
+</CardGroup>
+
+<Info>
+  Projektenként egyszerre csak egy hibakövető rendszer lehet **aktív**. Több hibakövető rendszert is beállíthatsz, és válthatod az aktívat anélkül, hogy törölnéd a többit.
+</Info>
+
+## Hibakövető rendszer hozzáadása
+
+<Steps>
+  <Step title="A projektbeállítások megnyitása">
+    Navigálj a **Beállítások → Hibakövető rendszerek** menüpontra az oldalsávban.
+  </Step>
+  <Step title="Új hibakövető rendszer létrehozása">
+    Kattints az **Új hibakövető rendszer** gombra. Adj egy leíró **Nevet** (pl. `Jira – QA tábla`), hogy azonosítani tudd a listában.
+  </Step>
+  <Step title="Válaszd ki a hibakövető rendszer típusát">
+    Válaszd a **Jira** vagy a **Redmine** lehetőséget a **Típus** legördülő menüből.
+  </Step>
+  <Step title="Töltsd ki a csatlakozási adatokat">
+    Add meg a kiválasztott hibakövető rendszer csatlakozási mezőit. Lásd az alábbi [konfigurációs referenciát](#konfigurációs-referencia).
+  </Step>
+  <Step title="Aktívvá tétel">
+    Kapcsold be az **Aktív** kapcsolót, hogy ezt a hibakövető rendszert használja az Analyse tesztfuttatásokból való hibanaplózáshoz. A projekt többi hibakövető rendszerénél kapcsold ki.
+  </Step>
+  <Step title="Mentés">
+    Kattints a **Mentés** gombra. Az Analyse azonnal érvényesíti a csatlakozási beállítások formátumát; a teljes kapcsolatfelvételi ellenőrzés az első hibanaplózáskor történik meg.
+  </Step>
+</Steps>
+
+## Konfigurációs referencia
+
+<Tabs>
+  <Tab title="Jira">
+    Az Analyse HTTP Basic Auth hitelesítéssel csatlakozik a Jira Server-hez a Jira REST API v2-n keresztül.
+
+    | Mező | Kötelező | Leírás |
+    | --- | --- | --- |
+    | **Alap URL** | Igen | A Jira Server példány teljes URL-je, pl. `https://jira.example.com` |
+    | **Felhasználónév** | Igen | Jira felhasználónév (általában a fiók e-mail-címe) |
+    | **Jelszó** | Igen | Jira fiók jelszava vagy személyes API token |
+    | **Távoli projekt kulcs** | Nem | Az alapértelmezett Jira projekt kulcs (pl. `QA`), amely előre ki van töltve hiba naplózásakor |
+    | **Alapértelmezett hibatípus azonosítója** | Nem | Az alapértelmezésként használandó hibatípus numerikus azonosítója (pl. `1` a Bug esetén) |
+
+    <Note>
+      A hitelesítési adatok minden kérésben HTTP Basic Auth formátumban kerülnek elküldésre. Használj dedikált szolgáltatásfiókot a minimálisan szükséges jogosultságokkal (hibák létrehozása a célprojektben).
+    </Note>
+  </Tab>
+  <Tab title="Redmine">
+    Az Analyse API kulccsal csatlakozik a Redmine-hoz, amelyet az `X-Redmine-API-Key` fejlécben ad át.
+
+    | Mező | Kötelező | Leírás |
+    | --- | --- | --- |
+    | **Alap URL** | Igen | A Redmine példány teljes URL-je, pl. `https://redmine.example.com` |
+    | **API kulcs** | Igen | Személyes API kulcs a Redmine fiókprofilból |
+    | **Távoli projekt azonosítója** | Nem | Redmine projekt azonosító, amely előre ki van töltve hiba naplózásakor |
+
+    <Tip>
+      A Redmine API kulcsodat a Redmine telepítés jobb felső sarkában elérhető **Fiókom → API hozzáférési kulcs** menüpont alatt találod.
+    </Tip>
+  </Tab>
+</Tabs>
+
+## Hiba naplózása tesztfuttatásból
+
+Amint egy hibakövető rendszer aktív egy projektben, egy **Hiba naplózása** művelet válik elérhetővé bármely sikertelen tesztlépésen egy tesztfuttatás során.
+
+<Steps>
+  <Step title="Jelöld meg a lépést sikertelenként">
+    Egy tesztfuttatás során állítsd egy lépés eredményét **Sikertelenre**.
+  </Step>
+  <Step title="Kattints a Hiba naplózása gombra">
+    Kattints a sikertelen lépésen megjelenő **Hiba naplózása** gombra. Az Analyse előre kitölti a hiba tárgyát és leírását a lépés nevével és az általad rögzített megjegyzésekkel.
+  </Step>
+  <Step title="Ellenőrzés és beküldés">
+    Szükség esetén módosítsd a tárgyat vagy a leírást, majd erősítsd meg. Az Analyse létrehozza a hibát a hibakövető rendszerben, és visszamenti az eredményül kapott hiba URL-jét a tesztlépés eredményéhez.
+  </Step>
+</Steps>
+
+<Warning>
+  Ha nincs aktívra jelölt hibakövető rendszer a projekthez, a **Hiba naplózása** gomb nem jelenik meg. Győződj meg arról, hogy legalább egy hibakövető rendszernél be van kapcsolva az **Aktív** kapcsoló.
+</Warning>
+
+Amikor egy tesztlépés sikertelen, az utolsó dolog, amit szeretnél, hogy egy külön hibajelentésbe másold a részleteket. A hibakövető rendszer integrációk lehetővé teszik, hogy közvetlenül egy sikertelen tesztelemből naplózz új hibát — a lépés neve, megjegyzések és kontextus előre ki vannak töltve, és az eredményül kapott jegy URL-je elmentődik a teszteredmény mellé.
+
+## Támogatott hibakövető rendszerek
+
+<CardGroup cols={2}>
+  <Card title="Jira" icon="bug" href="/integrations/issue-trackers">
+    Csatlakozik egy saját üzemeltetésű Jira Server példányhoz Basic Auth hitelesítéssel (felhasználónév és API token/jelszó).
+  </Card>
+
+  <Card title="Redmine" icon="circle-exclamation" href="/integrations/issue-trackers">
+    Csatlakozik a Redmine-hoz API kulccsal. Támogatja a fájlmellékletek feltöltését a hibával együtt.
+  </Card>
+</CardGroup>
+
+<Info>
+  Projektenként egyszerre csak egy hibakövető rendszer lehet **aktív**. Több hibakövető rendszert is beállíthatsz, és válthatod az aktívat anélkül, hogy törölnéd a többit.
+</Info>
+
+## Hibakövető rendszer hozzáadása
+
+<Steps>
+  <Step title="A projektbeállítások megnyitása">
+    Navigálj a **Beállítások → Hibakövető rendszerek** menüpontra az oldalsávban.
+  </Step>
+  <Step title="Új hibakövető rendszer létrehozása">
+    Kattints az **Új hibakövető rendszer** gombra. Adj egy leíró **Nevet** (pl. `Jira – QA tábla`), hogy azonosítani tudd a listában.
+  </Step>
+  <Step title="Válaszd ki a hibakövető rendszer típusát">
+    Válaszd a **Jira** vagy a **Redmine** lehetőséget a **Típus** legördülő menüből.
+  </Step>
+  <Step title="Töltsd ki a csatlakozási adatokat">
+    Add meg a kiválasztott hibakövető rendszer csatlakozási mezőit. Lásd az alábbi [konfigurációs referenciát](#konfigurációs-referencia).
+  </Step>
+  <Step title="Aktívvá tétel">
+    Kapcsold be az **Aktív** kapcsolót, hogy ezt a hibakövető rendszert használja az Analyse tesztfuttatásokból való hibanaplózáshoz. A projekt többi hibakövető rendszerénél kapcsold ki.
+  </Step>
+  <Step title="Mentés">
+    Kattints a **Mentés** gombra. Az Analyse azonnal érvényesíti a csatlakozási beállítások formátumát; a teljes kapcsolatfelvételi ellenőrzés az első hibanaplózáskor történik meg.
+  </Step>
+</Steps>
+
+## Konfigurációs referencia
+
+<Tabs>
+  <Tab title="Jira">
+    Az Analyse HTTP Basic Auth hitelesítéssel csatlakozik a Jira Server-hez a Jira REST API v2-n keresztül.
+
+    | Mező | Kötelező | Leírás |
+    | --- | --- | --- |
+    | **Alap URL** | Igen | A Jira Server példány teljes URL-je, pl. `https://jira.example.com` |
+    | **Felhasználónév** | Igen | Jira felhasználónév (általában a fiók e-mail-címe) |
+    | **Jelszó** | Igen | Jira fiók jelszava vagy személyes API token |
+    | **Távoli projekt kulcs** | Nem | Az alapértelmezett Jira projekt kulcs (pl. `QA`), amely előre ki van töltve hiba naplózásakor |
+    | **Alapértelmezett hibatípus azonosítója** | Nem | Az alapértelmezésként használandó hibatípus numerikus azonosítója (pl. `1` a Bug esetén) |
+
+    <Note>
+      A hitelesítési adatok minden kérésben HTTP Basic Auth formátumban kerülnek elküldésre. Használj dedikált szolgáltatásfiókot a minimálisan szükséges jogosultságokkal (hibák létrehozása a célprojektben).
+    </Note>
+  </Tab>
+  <Tab title="Redmine">
+    Az Analyse API kulccsal csatlakozik a Redmine-hoz, amelyet az `X-Redmine-API-Key` fejlécben ad át.
+
+    | Mező | Kötelező | Leírás |
+    | --- | --- | --- |
+    | **Alap URL** | Igen | A Redmine példány teljes URL-je, pl. `https://redmine.example.com` |
+    | **API kulcs** | Igen | Személyes API kulcs a Redmine fiókprofilból |
+    | **Távoli projekt azonosítója** | Nem | Redmine projekt azonosító, amely előre ki van töltve hiba naplózásakor |
+
+    <Tip>
+      A Redmine API kulcsodat a Redmine telepítés jobb felső sarkában elérhető **Fiókom → API hozzáférési kulcs** menüpont alatt találod.
+    </Tip>
+  </Tab>
+</Tabs>
+
+## Hiba naplózása tesztfuttatásból
+
+Amint egy hibakövető rendszer aktív egy projektben, egy **Hiba naplózása** művelet válik elérhetővé bármely sikertelen tesztlépésen egy tesztfuttatás során.
+
+<Steps>
+  <Step title="Jelöld meg a lépést sikertelenként">
+    Egy tesztfuttatás során állítsd egy lépés eredményét **Sikertelenre**.
+  </Step>
+  <Step title="Kattints a Hiba naplózása gombra">
+    Kattints a sikertelen lépésen megjelenő **Hiba naplózása** gombra. Az Analyse előre kitölti a hiba tárgyát és leírását a lépés nevével és az általad rögzített megjegyzésekkel.
+  </Step>
+  <Step title="Ellenőrzés és beküldés">
+    Szükség esetén módosítsd a tárgyat vagy a leírást, majd erősítsd meg. Az Analyse létrehozza a hibát a hibakövető rendszerben, és visszamenti az eredményül kapott hiba URL-jét a tesztlépés eredményéhez.
+  </Step>
+</Steps>
+
+<Warning>
+  Ha nincs aktívra jelölt hibakövető rendszer a projekthez, a **Hiba naplózása** gomb nem jelenik meg. Győződj meg arról, hogy legalább egy hibakövető rendszernél be van kapcsolva az **Aktív** kapcsoló.
+</Warning>
