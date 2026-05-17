@@ -12,6 +12,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
 <Steps>
   <Step title="Bejelentkezés">
     Navigálj a `/admin/login` oldalra, és add meg az e-mail-címedet és a jelszavadat. Sikeres bejelentkezés után az **Irányítópultra** kerülsz.
+
+    ![Bejelentkezési képernyő](/images/screenshots/01_Bejelentkezes.png)
   </Step>
   <Step title="Projekt létrehozása">
     A projekt a legfelső szintű tároló az összes teszttartalomhoz.
@@ -21,6 +23,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
     3. Add meg a projekt **Nevét** (például: `Saját alkalmazás`). Az Analyse automatikusan generál egy egyedi kulcsot a névből.
     4. Opcionálisan adj meg egy **Leírást**.
     5. Kattints a **Mentés** gombra.
+
+    ![Új projekt létrehozása](/images/screenshots/05_UjProjekt.png)
   </Step>
   <Step title="Modul hozzáadása">
     A modulok a termék funkcionális területeit képviselik, mint például a Hitelesítés, a Pénztár vagy a Keresés.
@@ -29,6 +33,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
     2. Menj a **Modulok** fülre, és kattints az **Új modul** gombra.
     3. Add meg a **Nevet** (például: `Hitelesítés`).
     4. Kattints a **Mentés** gombra.
+
+    ![Új modul létrehozása](/images/screenshots/18_UjModul.png)
   </Step>
   <Step title="Journey létrehozása">
     Egy journey egy modulon belüli egyetlen felhasználói folyamatot ír le — például: „Felhasználó bejelentkezik érvényes hitelesítő adatokkal."
@@ -37,6 +43,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
     2. Add meg a felhasználói folyamat **Nevét**.
     3. Opcionálisan adj meg egy **Almodul** címkét, ha a kapcsolódó journey-ket csoportosítani szeretnéd.
     4. Kattints a **Mentés** gombra.
+
+    ![Új Journey hozzáadása](/images/screenshots/19_UjJourney.png)
   </Step>
   <Step title="Journey verzió létrehozása">
     A Journey Verziók a journey-hez csatolt verziózott tesztesetek. Mindig egy adott verziót tesztelsz, nem magát a journey-t.
@@ -46,6 +54,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
     3. Add meg a **Verzió címkét** (például: `v1.0`).
     4. Egyelőre hagyd bekapcsolva a **Vázlat** állapotot — közzé fogod tenni a lépések hozzáadása után.
     5. Kattints a **Mentés** gombra.
+
+    ![Új Journey verzió létrehozása](/images/screenshots/20_UjJourneyVerzio.png)
   </Step>
   <Step title="Tesztlépések hozzáadása">
     A lépések meghatározzák azokat az egyéni műveleteket, amelyeket a tesztelő elvégez ezen verzió végrehajtása során.
@@ -55,6 +65,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
     3. Töltsd ki a **Definíció** mezőt (a művelet vagy előfeltétel) és az **Eseménynév** mezőt (a várt eredmény vagy kiváltott esemény).
     4. Opcionálisan csatolj egy **Figma-linket** a lépéshez tervhivatkozás céljából, vagy adj hozzá platformspecifikus megjegyzéseket a web, iOS vagy Android számára.
     5. Ismételd meg minden lépésnél a folyamatban.
+
+    ![Tesztlépés szerkesztője és séma](/images/screenshots/31_StepSzerkesztes+Sema.png)
 
     <Tip>
       Lépéseket tömegesen is importálhatsz Excel-fájlból. Használd a journey verzión elérhető **Importálás** műveletet, és tölts fel egy táblázatot a megadott sablon alapján.
@@ -79,6 +91,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
     4. Add meg a **Nevet** (például: `12. sprint regresszió`).
     5. Jelöld be az **Aktív** opciót, ha azt szeretnéd, hogy ez a terv jelenjen meg alapértelmezésként a Tesztterv-készítőben.
     6. Kattints a **Mentés** gombra.
+
+    ![Új tesztterv létrehozása](/images/screenshots/33_UjTesztterv.png)
   </Step>
   <Step title="A tesztterv összeállítása">
     Használd a **Tesztterv-készítőt** a belefoglalandó journey verziók kiválasztásához, és rendeld hozzá őket a csapattagokhoz.
@@ -89,6 +103,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
     4. Jelöld be a jelölőnégyzetet az imént közzétett verzió mellett, hogy hozzáadd a tervhez.
     5. A **Hozzárendelt személy** legördülő menüben válaszd ki a csapattagot, aki végrehajtja ezt a tesztet.
     6. Kattints a **Terv mentése** gombra. A hozzárendelt csapattagok e-mail-értesítést kapnak.
+
+    ![Felelős megadása tesztterv elemekhez](/images/screenshots/35_FelelosMegadasaTesztterv.png)
   </Step>
   <Step title="Tesztfuttatás indítása">
     A tesztfuttatás egy tesztterv egyszeri végrehajtása egy adott időpontban.
@@ -97,6 +113,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
     2. Válaszd ki a létrehozott **Teszttervet**.
     3. Opcionálisan válassz egy **Környezetet**, és kapcsolj hozzá egy **Kiadást**.
     4. Kattints a **Mentés** gombra a futtatás létrehozásához.
+
+    ![Új tesztfuttatás](/images/screenshots/42_UjFuttatas.png)
   </Step>
   <Step title="A tesztek végrehajtása">
     Nyisd meg a **Tesztfuttatót**, és lépj végig minden teszteseten, rögzítve az eredményeket.
@@ -110,6 +128,8 @@ Ez az útmutató végigvezet az Analyse-ban az első teszt futtatásához szüks
        - **Kihagyott** — a lépést szándékosan nem hajtottad végre
     4. Ha szükséges, adj hozzá megjegyzést, majd lépj a következő lépésre.
     5. Amikor az összes lépést rögzítetted, a journey verzió eredménye automatikusan beállítódik az egyéni lépések kimenetele alapján.
+
+    ![Teljes futtatás minden tesztesettel](/images/screenshots/44_TeljesFuttatasMindenEset.png)
 
     <Warning>
       Ha bármelyik lépés **Sikertelen** vagy **Blokkolt** állapotba kerül, az egész futtatás státusza ezt tükrözi. A futtatás lezárása előtt vizsgáld meg a sikertelen elemeket.

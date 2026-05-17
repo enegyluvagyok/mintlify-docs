@@ -8,6 +8,8 @@ Az **eseményséma** (event scheme) egy projektenként konfigurálható struktú
 
 Az eseményséma nem önálló entitás a felhasználói felületen — a journey lépések **meta kulcs-érték párjaiban** él: az `event_name` mező tárolja az adott lépéshez tartozó elvárt eseménynevet, a platformspecifikus mezők (`android`, `ios`) pedig JSON formátumban tárolhatják a részletes eseményparamétereket.
 
+![Tesztlépés szerkesztője és séma](/images/screenshots/31_StepSzerkesztes+Sema.png)
+
 ## Mire való az eseményséma?
 
 Ha a csapatod **analitikai követést** tesztel, minden felhasználói interakciónak egy adott journey-ben egy specifikus eseményt kell kiváltania, meghatározott paraméterekkel. Az eseményséma két kérdésre ad választ:
@@ -93,6 +95,10 @@ Ha egy esemény nem sül el vagy rossz paraméterekkel sül el, a lépést **Sik
 <Tip>
   Egyezz meg a csapatoddal az eseményparaméterek formátumában (kulcsnevekben, értéktípusokban) még az eseményséma kialakítása előtt. Egy következetes séma sokkal könnyebbé teszi a futtatásról futtatásra történő összehasonlítást és az eltérések azonosítását.
 </Tip>
+
+![Sémaszerkesztő főképernyő](/images/screenshots/37_SemaszerkesztoFokepernyo.png)
+
+![Séma elemek szerkesztője](/images/screenshots/38_SemaElemekSzekeszto.png)
 
 ## Importálás Excelből
 
