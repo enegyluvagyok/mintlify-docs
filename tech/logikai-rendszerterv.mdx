@@ -33,7 +33,7 @@ Az Analyse háromrétegű (three-tier) architektúrán alapul:
 
 ### 3. Adatréteg (Perzisztencia)
 
-- **MySQL 8.0\+** relációs adatbázis a strukturált adatok tárolására (**InnoDB** motor szükséges éles környezetben; a fejlesztési dump jelenleg MyISAM-ot használ — lásd: [Adatbázis-terv](/technologia/adatbazis-terv)); utf8mb4 karakterkészlet
+- **MySQL 8.0\+** relációs adatbázis a strukturált adatok tárolására (**InnoDB** motor szükséges éles környezetben; a fejlesztési dump jelenleg MyISAM-ot használ — lásd: [Adatbázis-terv](/tech/adatbazis-terv)); utf8mb4 karakterkészlet
 - **Eloquent ORM** (`app/Models/`) — modellekhez, kapcsolatokhoz; sémakezelés Laravel Migrations segítségével (`database/migrations/`)
 - **Fájltároló** (S3-kompatibilis / MinIO) a mellékletekhez, PDF és Excel exportokhoz
 - **Redis 7:** session store (`SESSION_DRIVER=redis`) és Laravel Queue backend (`QUEUE_CONNECTION=redis`); worker: `php artisan queue:work`, felügyelet: Supervisor; Reverb broadcast bus is Redis-t használ
@@ -139,4 +139,4 @@ A Laravel Reverb egy önálló, hosszan futó PHP folyamat, amelyet Supervisor f
 
 ## Jogosultságkezelési modell
 
-Az Analyse szerepkör-alapú hozzáférés-vezérlést (RBAC) alkalmaz. A szerepkörök és jogosultságok projektszinten kerülnek hozzárendelésre, részletek az [Igazgatási rendszertervben](/technologia/igazgatasi-rendszerterv) találhatók.
+Az Analyse szerepkör-alapú hozzáférés-vezérlést (RBAC) alkalmaz. A szerepkörök és jogosultságok projektszinten kerülnek hozzárendelésre, részletek az [Igazgatási rendszertervben](/tech/igazgatasi-rendszerterv) találhatók.
