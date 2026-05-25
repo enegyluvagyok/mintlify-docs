@@ -3,7 +3,7 @@ title: "Statisztikai chartok: teszteredmények vizualizációja"
 description: "Az Analyse Livewire-alapú, Chart.js-sel renderelt interaktív diagramokon mutatja a tesztlefedettséget, eredmény-eloszlást és időbeli trendeket. Ismerd meg az elérhető chartokat és az adatforrásukat."
 ---
 
-Az Analyse statisztikai nézetei Livewire-komponensek ként épülnek fel, amelyek a Chart.js könyvtárral renderelnek interaktív diagramokat. Az adatok szerver oldalon számítanak ki, a Livewire általá küldött JSON-on keresztül töltődnek be a canvas elembe, és valamelyik szűrő változásakor automatikusan frissítenek.
+Az Analyse statisztikai nézetei Livewire-komponensekként épülnek fel, amelyek a Chart.js könyvtárral renderelnek interaktív diagramokat. Az adatok szerver oldalon számítanak ki, a Livewire által küldött JSON-on keresztül töltődnek be a canvas elembe, és valamelyik szűrő változásakor automatikusan frissítenek.
 
 ![Statisztikai grafikonok](/images/screenshots/10_Grafikonok.png)
 
@@ -22,11 +22,11 @@ Megmutatja az adott tesztterven vagy tesztfuttatáson belül az elemek eredmény
 | Érvénytelen | Világos szürke | `invalid` eredményű elemek |
 | Futtatandó | Kék | `not_ran` — még nem végrehajtott elemek |
 
-A diagram közepe az előrehaladfást százalékban mutatja (elvgzett elemek / összes elem).
+A diagram közepe az előrehaladást százalékban mutatja (elvégzett elemek / összes elem).
 
 ### 2. Futtatás-trend (Line chart)
 
-Időbeli sorozatként ábrázolja egy adott tesztterv futtatásainak eredményt, kiadásonként vagy dátumonként bontva. Megmutatja, hogy a minőség javul vagy roml-e az idő múlasával.
+Időbeli sorozatként ábrázolja egy adott tesztterv futtatásainak eredményt, kiadásonként vagy dátumonként bontva. Megmutatja, hogy a minőség javul vagy romlik-e az idő múlásával.
 
 - **X tengely** — futtatás dátuma vagy kiadás címkéje
 - **Y tengely** — sikeres / sikertelen / blokkolt elemek száma vagy aránya
@@ -34,7 +34,7 @@ Időbeli sorozatként ábrázolja egy adott tesztterv futtatásainak eredményt,
 
 ### 3. Modul-szintű lefedettség (Bar chart)
 
-Modulonként mutatja a tesztlefedettséget: hány journey verzió szerepel legalább egy aktiv tesztterven, és azok mekkora hányadát hajtották már végre.
+Modulonként mutatja a tesztlefedettséget: hány journey verzió szerepel legalább egy aktív tesztterven, és azok mekkora hányadát hajtották már végre.
 
 - **X tengely** — modulok neve
 - **Y tengely** — verziószám
@@ -53,12 +53,12 @@ Megmutatja, hogy az egyes platformokon (Android / iOS / Web) hány `invalid`, `n
 Minden chart egy dedikált Livewire-komponens, amely:
 
 1. Szerver oldalon előállítja az adathalmazt az Eloquent modelleken keresztül
-2. A készített adatot `labels` és `datasets` kulcsok alá rendezi, Chart.js-kompatibilis JSON formátban
-3. A JSON-t Livewire esemkényen keresztül (`$dispatch`) küldi el a front-endnek
+2. A készített adatot `labels` és `datasets` kulcsok alá rendezi, Chart.js-kompatibilis JSON formátumban
+3. A JSON-t Livewire eseményen keresztül (`$dispatch`) küldi el a front-endnek
 4. Az Alpine.js / JavaScript event listener fogadja az adatot és frissíti a `<canvas>` elem Chart.js példányát
 
 ```js
-// Példa: Livewire esemkény fogadása és chart frissítése
+// Példa: Livewire esemény fogadása és chart frissítése
 window.addEventListener('chartDataUpdated', event => {
     myChart.data = event.detail;
     myChart.update();
@@ -91,12 +91,12 @@ A chartok adatai az alábbi táblákból származnak:
 | Platform-hiba | `test_run_item_platform_kv.status` (vagy `virtual_steps` JSON) |
 
 <Note>
-  A chartok csak azokat az adatokat tartalmazzk, amelyekhez a bejelentkezett felhasználónak hozzáférése van. A projekt-szintű jogosultságok automatikusan érvényesülnek.
+  A chartok csak azokat az adatokat tartalmazzák, amelyekhez a bejelentkezett felhasználónak hozzáférése van. A projekt-szintű jogosultságok automatikusan érvényesülnek.
 </Note>
 
 ## Chart.js integráció
 
-Az Analyse a Chart.js `4.x` verzióját használja. A chartok `<canvas>` elementekbe renderelnek, az inicializáció a `livewire:init` esemkény után történik, hogy a Livewire által injektált adatok már rendelkezésre álljanak:
+Az Analyse a Chart.js `4.x` verzióját használja. A chartok `<canvas>` elemekbe renderelnek, az inicializáció a `livewire:init` esemény után történik, hogy a Livewire által injektált adatok már rendelkezésre álljanak:
 
 ```js
 document.addEventListener('livewire:init', () => {
