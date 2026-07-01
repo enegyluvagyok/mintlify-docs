@@ -7,35 +7,43 @@ Az igazgatási rendszerterv az Analyse platform szervezeti és adminisztrációs
 
 ## Felhasználókezelés
 
-Az Analyse-ban a felhasználói fiókok kezelése az adminisztrátori felületen keresztül történik (`/admin`).
+Az Analyse-ban a felhasználói fiókok kezelése az adminisztrátori felületen keresztül történik (`/admin/users`).
 
-- **Fiók létrehozása** — Az adminisztrátor hozza létre az új felhasználói fiókokat és állítja be az alapértelmezett projektet.
-- **Jóváhagyási folyamat** — Új fiókok jóváhagyást igényelnek az adminisztrátortól az első bejelentkezés előtt.
-- **Jelszókezelés** — A jelszó visszaállítása e-mailen keresztül lehetséges.
+- **Fiók létrehozása** — Az adminisztrátor hozza létre az új felhasználói fiókokat, beállítja a szerepköröket és az alapértelmezett projektet.
+- **Jóváhagyási folyamat** — Új fiókok jóváhagyást igényelnek az adminisztrátortól az első bejelentkezés előtt (`approved` mező). Jóváhagyatlan fiókkal a bejelentkezés meghiúsul.
+- **Jelszókezelés** — A jelszó visszaállítása e-mailen keresztül lehetséges; az adminisztrátor szükség esetén közvetlenül is állíthat be új jelszót.
+
+![Felhasználók listája az adminisztrátori felületen](/images/screenshots/11_Felhasznalok.png)
 
 ## Szerepkörök és jogosultságok
 
-Az Analyse szerepkör-alapú hozzáférés-vezérlést (RBAC) alkalmaz. Az egyes szerepkörökhöz tartozó jogosultságok:
+Az Analyse szerepkör-alapú hozzáférés-vezérlést (RBAC) alkalmaz a **Spatie Laravel Permission** csomag segítségével. Három szerepkör létezik:
 
 | Szerepkör | Leírás | Főbb jogosultságok |
 | --- | --- | --- |
-| **Adminisztrátor** | Teljes rendszerszintű hozzáférés | Felhasználók kezelése, projektek létrehozása, minden beállítás módosítása |
-| **Projektmenedzser** | Projekten belüli teljes hozzáférés | Tesztterv létrehozása, tesztelők hozzárendelése, eredmények megtekintése |
-| **Tesztelő** | Végrehajtói hozzáférés | Hozzárendelt tesztfuttatások végrehajtása, eredmények rögzítése |
-| **Megfigyelő** | Csak olvasási hozzáférés | Eredmények és riportok megtekintése, exportok letöltése |
+| **Admin** | Teljes rendszerszintű hozzáférés | Felhasználók kezelése és jóváhagyása; projektek, modulok, journey-k, verziók, lépések létrehozása, szerkesztése és törlése; minden beállítás módosítása; tevékenységnapló megtekintése |
+| **Szerkesztő** | Tartalomkezelői hozzáférés | Projektek, modulok, journey-k, verziók és lépések létrehozása és szerkesztése; teszttervek és futtatások kezelése; exportok letöltése. Törlési műveletre nincs jogosultsága. |
+| **Megtekintő** | Csak olvasási hozzáférés | Minden rekord megtekintése; exportok letöltése. Nem hozhat létre, nem szerkeszthet, nem törölhet. |
+
+![Szerepkörök kezelése](/images/screenshots/12_Jogosultsagkezeles.png)
+
+![Jogosultságok részletes nézete](/images/screenshots/16_Jogosultsagok.png)
+
+<Info>
+  Egy felhasználóhoz egyszerre több szerepkör is hozzárendelhető. A jogosultságok kiértékelése a legszélesebb szerepkör alapján történik (pl. ha valaki egyszerre Szerkesztő és Megtekintő, a Szerkesztői jogok érvényesülnek).
+</Info>
 
 ## Szervezeti hierarchia
 
 ```text
 Szervezet
-└── Adminisztrátor
+└── Admin
     ├── Projekt A
-    │   ├── Projektmenedzser
-    │   ├── Tesztelő(k)
-    │   └── Megfigyelő(k)
+    │   ├── Szerkesztő(k)  — teszttervek kezelése, végrehajtás
+    │   └── Megtekintő(k)  — eredmények és riportok olvasása
     └── Projekt B
-        ├── Projektmenedzser
-        └── Tesztelő(k)
+        ├── Szerkesztő(k)
+        └── Megtekintő(k)
 ```
 
 ## Egyéni mezők és sémabeállítások
@@ -55,10 +63,7 @@ Az adminisztrátor testreszabhatja a rendszert az alábbi eszközökkel:
 ## Biztonsági irányelvek
 
 - **Minimális jogosultság elve** — Minden felhasználó csak a feladatához szükséges minimális hozzáférést kapja.
-- **Projektszintű izoláció** — A felhasználók csak azokhoz a projektekhez férnek hozzá, amelyekhez hozzárendelték őket.
-- **Auditnapló** — A kritikus adminisztrációs műveletek naplózásra kerülnek.
-- **Munkamenet-kezelés** — A munkamenetek időkorlátos tokenekkel kerülnek megvalósításra; inaktivitás esetén automatikus kijelentkezés.
-
-<Info>
-  A felhasználók és szerepkörök részletes kezelési lépéseit a [Felhasználók & Szerepkörök](/tech/igazgatasi-rendszerterv) dokumentáció tartalmazza.
-</Info>
+- **Jóváhagyási kapu** — Új fiók nem léphet be addig, amíg az adminisztrátor explicit módon jóvá nem hagyja (`approved = 1`).
+- **Auditnapló** — A kritikus adminisztrációs műveletek (létrehozás, módosítás, törlés) automatikusan naplózásra kerülnek a Spatie Activity Log segítségével.
+- **Munkamenet-kezelés** — A munkamenetek Redis-alapú session store-ban tárolódnak; a session lejárati idő a `.env` `SESSION_LIFETIME` változójával konfigurálható.
+- **CSRF-védelem** — Minden form és Livewire-kérés Laravel beépített CSRF tokennel védett.

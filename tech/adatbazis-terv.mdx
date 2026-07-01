@@ -255,6 +255,8 @@ Tesztszcenárió lépések **nested set** fával (hierarchikus struktúra). A `p
 
 **Indexek:** `(journey_version_id, sort)`, `(path)`, `(_lft, _rgt, parent_id)`, `(parent_id)`
 
+![Journey lépések hierarchikus (nested set) struktúrája a felületen](/images/screenshots/24_JourneyNestedSet.png)
+
 <Info>
   A `journey_steps` tábla a `wsmallnews/filament-nestedset` csomag nested set implementációját használja. A `_lft` / `_rgt` mezők a fa-struktúra hatékony lekérdezéséhez szükségesek — ne módosítsd őket kézzel.
 </Info>

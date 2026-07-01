@@ -9,7 +9,7 @@ A logikai rendszerterv az Analyse platform szoftverkomponenseinek, rétegeinek �
 
 Az Analyse háromrétegű (three-tier) architektúrán alapul:
 
-### 1. Prezentációs réteg (Livewire \+ Blade)
+### Prezentációs réteg (Livewire + Blade)
 
 - Böngészőalapú webalkalmazás, szerver-oldali rendereléssel (Laravel Blade template-ek), **Nginx → Octane (Swoole, :8000)** fogadja a kéréseket
 - Reaktív UI komponensek: **Laravel Livewire 3** — az állapot szerver oldalon él, a kliens XHR-en szinkronizál, nincs szükség külön API-ra a frontend és a backend között
@@ -17,7 +17,7 @@ Az Analyse háromrétegű (three-tier) architektúrán alapul:
 - Kliens-oldali kisebb interakciók: **Alpine.js** (dropdown, modal, inline validáció)
 - CSS/JS bundling: **Vite 7** (`npm run build` → `public/build/`, forrás: `resources/js/`, `resources/css/`)
 
-### 2. Alkalmazásréteg (Laravel MVC \+ Service)
+### Alkalmazásréteg (Laravel MVC + Service)
 
 - **Controllers** (`app/Http/Controllers/`) — HTTP kérések fogadása, válasz visszaküldése
 - **Livewire Components** (`app/Http/Livewire/`) — stateful reaktív UI komponensek
@@ -31,7 +31,7 @@ Az Analyse háromrétegű (three-tier) architektúrán alapul:
 - Integrációs pontok kezelése (Jira, Redmine, Figma, CMP)
 - Exportok generálása (PDF: DomPDF, Excel: Maatwebsite/PhpSpreadsheet) aszinkron Job-ként
 
-### 3. Adatréteg (Perzisztencia)
+### Adatréteg (Perzisztencia)
 
 - **MySQL 8.0\+** relációs adatbázis a strukturált adatok tárolására (**InnoDB** motor szükséges éles környezetben; a fejlesztési dump jelenleg MyISAM-ot használ — lásd: [Adatbázis-terv](/tech/adatbazis-terv)); utf8mb4 karakterkészlet
 - **Eloquent ORM** (`app/Models/`) — modellekhez, kapcsolatokhoz; sémakezelés Laravel Migrations segítségével (`database/migrations/`)

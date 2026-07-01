@@ -1,0 +1,1285 @@
+# Cél és hatókör
+
+Ez a kézikönyv az Analyse tesztmenedzsment rendszer végfelhasználóinak szól. Célja, hogy bemutassa, hogyan lehet a rendszert a mindennapos munkavégzés során hatékonyan használni – a bejelentkezéstől kezdve a teszttervek összeállításán és a tesztfuttatások elvégzésén át az eredmények exportálásáig.
+
+A dokumentum az alábbi területeket fedi le:
+- a rendszer elérése és bejelentkezés,
+- projektek, modulok, journey-k és verzióik kezelése,
+- teszttervek összeállítása és hozzárendelések kezelése,
+- tesztfuttatások indítása és végrehajtása,
+- eredmények rögzítése, hibajelentések kezelése,
+- exportálás és importálás,
+- rendszerintegrációk (Figma, hibakövető rendszerek, CMP),
+- beállítások és jogosultságok,
+- adatbiztonsági szabályok.
+
+A dokumentum nem tartalmaz fejlesztői, üzemeltetési vagy rendszergazdai utasításokat. Azon funkciók leírása, amelyek kizárólag rendszergazdai jogosultsággal érhetők el, csak annyiban szerepel, amennyiben a végfelhasználó számára is releváns (pl. hogyan kérhet hozzáférést).
+
+## Elvárt ismeretek
+
+A kézikönyv feltételezi, hogy az olvasó rendelkezik az alábbi alaptudással:
+- alapvető böngészőhasználat (oldal megnyitása, navigáció, gombok kattintása),
+- belépési adatok (felhasználónév és jelszó) kezelése,
+- fájlok letöltése és feltöltése böngészőből,
+- Excel-fájlok megnyitásának és szerkesztésének alapjai (az importálási funkció használatához),
+- a szoftvertesztelés alapfogalmai: teszteset, tesztelési ciklus, hibajelentés.
+
+## Kapcsolódó dokumentumok
+
+| Dokumentum | Megjegyzés |
+|---|---|
+| Analyse – Gyors útmutató | Az alkalmazás `quickstart.mdx` oldala – lépésről lépésre az első tesztig |
+| Analyse – Alapfogalmak | Az alkalmazás `concepts.mdx` oldala – fogalommagyarázatok |
+| Analyse – Telepítési kézikönyv | `tech/telepitesi-kezikoenyv.mdx` – rendszergazdák számára |
+| Analyse – Technológiai dokumentumok | Logikai, igazgatási és fizikai rendszertervek a `tech/` mappában |
+
+---
+
+# Rendszer általános bemutatása
+
+Az Analyse egy webalapú tesztmenedzsment rendszer, amelyet szoftvertermékek tesztelésének tervezésére, végrehajtására és nyomon követésére fejlesztettek. A rendszer a tesztelési folyamatot **journey-k** (felhasználói folyamatok) köré szervezi: minden teszteset egy konkrét felhasználói útvonalat ír le lépésről lépésre, amelyeket a tesztelő végrehajt és értékel.
+
+A rendszer különösen hasznos olyan csapatok számára, amelyek Google Analytics (GA4) eseményeket is tesztelnek: a struktúra lehetővé teszi, hogy minden lépésnél dokumentálják a várt eseménynevet, és futtatásról futtatásra ellenőrizzék annak megtörténtét.
+
+## A rendszer célja
+
+**Az Analyse a következő feladatokra alkalmas:**
+- tesztesetek strukturált dokumentálása és verziókövetése,
+- teszttervek összeállítása sprint- vagy kiadásalapú ciklusokhoz,
+- tesztfeladatok kiosztása csapattagoknak,
+- tesztek végrehajtásának lépésről lépésre történő nyomon követése,
+- hibák naplózása és hivatkozása külső hibakövető rendszerbe (pl. Jira, Redmine),
+- tesztelési eredmények exportálása PDF vagy Excel formátumban,
+- Google Analytics eseménystruktúra dokumentálása és ellenőrzése,
+- Figma tervek hozzákapcsolása az egyes tesztlépésekhez.
+
+**Az Analyse nem alkalmas:**
+- általános projektmenedzsmentre (feladatkezelő nem),
+- kód- vagy verziókövetési feladatokra,
+- teljesítmény- vagy terheléstesztelési adatok rögzítésére,
+- automatizált tesztek futtatására.
+
+**Főbb üzleti objektumok:**
+
+| Objektum | Leírás |
+|---|---|
+| Projekt | A legfelső szintű tároló, egy terméket vagy alkalmazást képvisel |
+| Modul | A projekt egy funkcionális területe (pl. Hitelesítés, Pénztár) |
+| Journey | Egy felhasználói folyamat leírása egy modulon belül |
+| Journey Verzió | A journey egy konkrét, verziózott tesztesete (vázlat vagy közzétett) |
+| Journey Lépés | Egyetlen elvégzendő művelet vagy ellenőrzés |
+| Tesztterv | Journey verziók gyűjteménye egy tesztelési ciklushoz |
+| Tesztfuttatás | Egy tesztterv egyszeri végrehajtása |
+| Kiadás | Szoftververzió mérföldkő; tesztfuttatások köthetők hozzá |
+| Környezet | A tesztelési környezet (pl. staging, éles) |
+
+## Fogalmak és rövidítések
+
+| Fogalom / rövidítés | Magyarázat |
+|---|---|
+| Journey | Felhasználói folyamat: egy konkrét felhasználói útvonal a rendszerben lépésről lépésre |
+| Journey Verzió | A journey egy adott, számozott verziója, amely tesztelésre kerül |
+| Vázlat | Szerkesztés alatt álló, még nem tesztelésre kész verzió állapota |
+| Közzétett | Tesztelésre kész verzió állapota; csak ilyen kerülhet teszttervbe |
+| Tesztterv | Egy ciklusban tesztelendő journey verziók összessége |
+| Tesztterv-készítő | A felület, amelyen a tesztterv összeállítható és felelősök rendelhetők hozzá |
+| Tesztfuttató | A felület, amelyen a tesztelő lépésről lépésre végrehajtja és értékeli a teszteket |
+| GA4 | Google Analytics 4 – eseményalapú analitikai platform |
+| CMP | Consent Management Platform – sütihozzájárulási kezelő rendszer |
+| Figma | Digitális tervezőeszköz; az Analyse lépésekhez csatolható Figma-linkek támogatásával integrálható |
+| Issue tracker | Külső hibakövető rendszer (pl. Jira, Redmine, GitLab, GitHub) |
+| RBAC | Role-based access control – szerepkör-alapú hozzáférés-kezelés |
+| Admin | Rendszergazda szerepkör – teljes hozzáféréssel rendelkezik |
+| Szerkesztő | Szerkesztői szerepkör – létrehozhat és módosíthat, de nem törölhet |
+| Megtekintő | Olvasói szerepkör – csak megtekinthet |
+
+## Végfelhasználói típusok és szerepkörök
+
+Az Analyse három felhasználói szerepkört ismer:
+
+| Szerepkör | Leírás | Elérhető fő funkciók | Korlátozások |
+|---|---|---|---|
+| **Admin (Rendszergazda)** | Teljes hozzáféréssel rendelkezik minden funkcióhoz | Minden entitás létrehozása, szerkesztése, törlése; felhasználók kezelése; rendszerbeállítások módosítása | Nincs korlátozás |
+| **Szerkesztő** | Tartalmat hozhat létre és szerkeszthet | Projektek, modulok, journey-k, verziók, lépések létrehozása és szerkesztése; teszttervek és futtatások kezelése | Nem törölhet rekordokat |
+| **Megtekintő** | Csak olvasási hozzáféréssel rendelkezik | Minden rekord megtekintése, exportok letöltése | Nem hozhat létre, nem szerkeszthet, nem törölhet |
+
+![Jogosultságkezelés](/images/screenshots/14_Jogosultsagok.png)
+
+**Fontos:** minden új felhasználói fiókot egy adminisztrátornak jóvá kell hagynia, mielőtt az bejelentkezhetne. Jóváhagyatlan fiókkal a bejelentkezési kísérlet meghiúsul, és a rendszer tájékoztatja a felhasználót.
+
+Ha nem biztos a szerepköréről, forduljon az adminisztrátorhoz.
+
+## Elérési módok
+
+Az Analyse kizárólag **webes böngészőn keresztül** érhető el. Mobilalkalmazás vagy asztali telepítőcsomag nem áll rendelkezésre.
+
+| Csatorna | Leírás | Feltételek |
+|---|---|---|
+| Webes böngésző | Az alkalmazás `/admin` útvonalon érhető el | Érvényes felhasználói fiók és internet-hozzáférés szükséges |
+
+A rendszer sötét és világos megjelenítési módot egyaránt támogat; a váltás a felhasználói felületen elérhető.
+
+## Más rendszerekkel való kapcsolat
+
+Az Analyse több külső rendszerhez kapcsolódik, amelyek végfelhasználói szempontból is relevánsak:
+
+| Rendszer | Kapcsolat célja | Mit kell tudni |
+|---|---|---|
+| **Jira / Redmine / GitLab / GitHub / Linear / YouTrack** | Hibajegy-létrehozás tesztfuttatásból | A tesztelő közvetlenül a Tesztfuttatóból naplózhat hibát a konfigurált rendszerbe; ehhez projektenként be kell állítani az integrációt |
+| **Figma** | Tervhivatkozások lépésekhez | Figma API-token szükséges a konfigurációhoz; ha be van állítva, a lépéseknél Figma-előnézet jelenik meg |
+| **CMP (Consent Management Platform)** | Sütihozzájárulási sémaadatok importálása | A CMP Konfiguráció oldalon keresztül tölthető be az eseménystruktúra |
+| **E-mail** | Értesítések küldése tesztelőknek | Tesztterv mentésekor a hozzárendelt tesztelők e-mail-értesítést kapnak a feladataikról |
+| **BrowserStack** | Teszteszközök szinkronizálása | A teszteszközök listája automatikusan frissíthető a BrowserStack-fiókból |
+
+---
+
+# Hozzáférés a rendszerhez
+
+## Rendszer használatának szoftver- és hardverigénye
+
+A rendszer használatához az alábbiak szükségesek:
+
+- **Böngésző:** Google Chrome, Mozilla Firefox, Microsoft Edge, vagy Apple Safari naprakész verzióban. A legjobb élményt Chrome és Edge böngészőkkel biztosítja a rendszer.
+- **Operációs rendszer:** Windows, macOS, Linux – bármely olyan rendszer, amelyen modern böngésző fut.
+- **Hálózat:** Aktív internet-hozzáférés szükséges. A rendszer valós idejű kommunikációt is alkalmaz (WebSocket kapcsolat), ezért stabil kapcsolat javasolt.
+- **Képernyőfelbontás:** Legalább 1280×768 pixel ajánlott az optimális megjelenítéshez.
+
+A kódbázis alapján konkrét minimális hardverkövetelmény nem azonosítható. A rendszer használatához böngészővel rendelkező, hálózati kapcsolattal ellátott eszköz szükséges.
+
+Speciális eszközök (nyomtató, RFID olvasó, POS terminál) nem szükségesek a rendszer használatához.
+
+## Szükséges jogosultságok
+
+A rendszerbe való belépéshez az alábbiak szükségesek:
+
+- **E-mail-cím és jelszó** – a rendszer ezekkel azonosítja a felhasználót.
+- **Jóváhagyott fiók** – a fiókot egy rendszergazdának jóvá kell hagynia a regisztráció után, különben a bejelentkezés meghiúsul.
+- **Szerepkör** – a rendszergazda rendelhet szerepkört (Admin, Szerkesztő, Megtekintő), amely meghatározza az elérhető funkciókat.
+
+Többfaktoros azonosítás (MFA) a rendelkezésre álló forrásokból nem azonosítható.
+
+**Hozzáférés igénylése:** Forduljon a rendszer adminisztrátorához fiók létrehozásához és jóváhagyásához. A szükséges információ: teljes név, e-mail-cím, szükséges szerepkör.
+
+**Jogosultság hiányában:** A rendszer a nem elérhető funkciókat elrejti vagy letiltja. Ha egy olyan oldalra próbál navigálni, amelyhez nincs jogosultsága, a rendszer visszairányítja, vagy hibaüzenetet jelenít meg.
+
+## Rendszer telepítése és kapcsolódás
+
+Az Analyse webalapú rendszer, telepítés nem szükséges. A böngészőben az alábbi cím megnyitásával érhető el:
+
+> **[RENDSZER_URL]/admin**
+
+A pontos URL-t az adminisztrátortól kell kérni.
+
+## Ajánlott kezdeti konfiguráció
+
+Az első használat előtt ellenőrizze az alábbiakat:
+
+1. **Böngésző frissítése:** Győződjön meg arról, hogy a böngésző naprakész verziót futtat.
+2. **Felugró ablakok engedélyezése:** Bizonyos funkciók (pl. PDF letöltés) felugró ablakokat igényelhetnek – engedélyezze ezeket a rendszer domainjéhez.
+3. **Fájlletöltés:** Ellenőrizze, hogy a böngésző engedélyezi a fájlok automatikus letöltését (Excel, PDF exportok).
+4. **Jelszócsere:** Ha az adminisztrátor ideiglenes jelszót adott, az első bejelentkezés után változtassa meg.
+5. **Profiladatok:** Bejelentkezés után ellenőrizze, hogy a neve és e-mail-címe helyesen szerepel.
+6. **Alapértelmezett projekt:** Ha több projektet kezel, az oldalsávban beállítható az alapértelmezett projekt.
+
+## Bejelentkezés és kijelentkezés
+
+**Bejelentkezés lépései:**
+
+1. Nyissa meg a böngészőt, és navigáljon a rendszer URL-jére: `[RENDSZER_URL]/admin/login`.
+2. Adja meg az **e-mail-címét** és **jelszavát** a megjelenő mezőkbe.
+
+   ![Bejelentkezési képernyő](/images/screenshots/01_Bejelentkezes.png)
+
+3. Kattintson a **Bejelentkezés** gombra.
+4. Sikeres bejelentkezés után az **Irányítópultra** (Dashboard) kerül.
+
+**Sikertelen bejelentkezés esetén:**
+- Ellenőrizze, hogy helyesen adta-e meg az e-mail-címet és a jelszót.
+- Ha elfelejtette a jelszavát, kattintson az **Elfelejtett jelszó** hivatkozásra, és kövesse az utasításokat.
+
+  ![Elfelejtett jelszó oldal](/images/screenshots/03_ElfelejtettJelszo.png)
+
+- Ha a rendszer azt jelzi, hogy a fiókja nincs jóváhagyva, forduljon az adminisztrátorhoz.
+- Több sikertelen kísérlet esetén a fiók zárolódhat – ilyenkor is az adminisztrátorhoz kell fordulni.
+
+**Kijelentkezés lépései:**
+
+1. Kattintson a nevére vagy profilképére az oldal tetején (a navigációs sávban).
+2. Válassza a **Kijelentkezés** lehetőséget a megjelenő menüből.
+3. A rendszer visszairányítja a bejelentkezési oldalra.
+
+**Miért fontos a kijelentkezés?** Ha megosztott vagy nyilvános számítógépen dolgozik, a kijelentkezés megakadályozza, hogy illetéktelen személy hozzáférjen a fiókjához és az adatokhoz.
+
+---
+
+# Felhasználói felület használata
+
+## Felhasználói felület bemutatása
+
+Az Analyse admin felülete az alábbi fő részekből áll:
+
+| Felületi elem | Szerepe | Tipikus műveletek |
+|---|---|---|
+| **Oldalsáv (bal navigáció)** | A rendszer fő navigációs területe, modulonként csoportosítva | Menüpontok közötti navigáció; projekt váltása |
+| **Irányítópult (Dashboard)** | Bejelentkezés utáni főoldal | Projekt statisztikák és grafikonok megtekintése |
+| **Listanézet** | Rekordok (pl. projektek, teszttervek) táblázatos megjelenítése | Keresés, szűrés, rendezés; rekordra kattintás a részletekhez |
+| **Részletes oldal** | Egyetlen rekord teljes adatainak megjelenítése | Adatok megtekintése; szerkesztés; kapcsolódó rekordok kezelése |
+| **Űrlap** | Adatbeviteli oldal új rekord létrehozásához vagy szerkesztéséhez | Mezők kitöltése, mentés |
+| **Tesztterv-készítő** | Interaktív felület teszttervek összeállításához | Journey verziók kiválasztása, felelősök hozzárendelése |
+| **Tesztfuttató** | Interaktív felület tesztek végrehajtásához | Lépésenkénti eredményrögzítés |
+| **Értesítési terület** | Felső sávban megjelenő rövid visszajelzések | Sikeres mentés, hiba vagy figyelmeztetés olvasása |
+
+![Dashboard főoldal](/images/screenshots/04_Dashboard.png)
+
+Az oldalsáv navigációs csoportjai:
+- **Kezdő lépések / Irányítópult** – főoldal
+- **Projektek és struktúra** – Projektek, Modulok, Journey-k, Verziók, Lépések
+- **Teszttervezés** – Teszttervek, Tesztterv-készítő
+- **Tesztvégrehajtás** – Tesztfuttatások, Tesztfuttató
+- **Integráció és beállítások** – Issue trackerek, Figma konfiguráció, CMP konfiguráció, Egyéni mezők, Grafikonok
+- **Adminisztráció** – Felhasználók, Szerepkörök, Tevékenységnapló (csak adminisztrátoroknak)
+
+## A felület általános alapelvei
+
+Az alábbi szabályok az egész felületen érvényesek:
+
+- **Keresés és szűrés:** A listanézeteken szűrőmezők és keresőmező érhető el a rekordok szűkítéséhez. A szűrők alkalmazása után csak az egyező bejegyzések jelennek meg.
+
+  ![Keresés és szűrés a listanézetben](/images/screenshots/30_Kereso.png)
+
+- **Rekord részletezése:** Egy sorra kattintva megnyílik az adott rekord részletes oldala.
+- **Módosítások mentése:** A módosítások csak a **Mentés** gombra kattintás után lépnek érvénybe. Mentés nélkül elhagyva az oldalt a változtatások elvesznek.
+- **Kötelező mezők:** A csillaggal (\*) jelölt mezők kitöltése kötelező; ezek nélkül az űrlap nem menthető.
+- **Törlés megerősítése:** Törlés előtt a rendszer megerősítést kér. A törlés visszavonhatatlan, ezért járjon el körültekintően.
+- **Jogosultság alapú megjelenítés:** Ha egy gomb vagy funkció nem jelenik meg, valószínűleg nincs jogosultsága az adott műveletre. Forduljon az adminisztrátorhoz.
+- **Visszajelzések:** A sikeres és sikertelen műveletek után a képernyő tetején rövid üzenet jelenik meg (pl. „Sikeresen mentve" vagy hibaüzenet).
+- **Valós idejű frissítés:** A Tesztfuttató felületen az adatok valós időben frissülnek – ha egy másik tesztelő is dolgozik ugyanazon a futtatáson, a változások automatikusan megjelennek.
+- **Projekt váltása:** Ha több projekthez is hozzáfér, az oldalsávban a projekt neve melletti legördülőből válthat projekt között.
+
+## Javasolt gyakorlatok
+
+- **Mentés előtt ellenőrizze az adatokat** – különösen importálás és törlés esetén, mivel ezek visszavonhatók korlátoltan vagy egyáltalán nem.
+- **Journey verziókat csak akkor tegye közzé**, ha a lépések teljesek és felülvizsgáltak – közzétett verzió bármely aktív teszttervbe bekerülhet.
+- **Export előtt szűrjön** – ha csak egy részhalmazt kíván exportálni, alkalmazzon szűrőt a listanézeten.
+- **Importálás előtt ellenőrizze a fájlformátumot** – csak a rendszer által biztosított sablonnal kompatibilis Excel-fájlok fogadhatók el.
+- **Hibabejelentéshez készítsen képernyőképet** – ha hibát tapasztal, rögzítse a hiba pontos idejét és körülményeit, majd képernyőképpel együtt jelezze a supportnak.
+- **Megosztott gépen mindig jelentkezzen ki** – a munkamenet nyitva hagyása biztonsági kockázatot jelent.
+- **Rendszeresen mentse a teszteredményeket** – a Tesztfuttatóban a lépésenkénti rögzítés folyamatosan menti az adatokat, de ajánlott manuálisan is ellenőrizni.
+
+## Rendszeresen felmerülő feladatok
+
+---
+
+### Projekt létrehozása
+
+**Cél:**
+Új projekt létrehozása, amely a tesztelési tartalom legfelső szintű tárolója.
+
+**Előfeltételek:**
+Szerkesztői vagy adminisztrátori jogosultság szükséges.
+
+**Lépések:**
+
+1. Az oldalsávban kattintson a **Projektek** menüpontra.
+2. Kattintson az **Új projekt** gombra.
+3. Adja meg a projekt **Nevét** (kötelező). A rendszer automatikusan generál egy egyedi kulcsot a névből.
+4. Opcionálisan adjon meg **Leírást**.
+5. Kattintson a **Mentés** gombra.
+
+![Új projekt létrehozása](/images/screenshots/05_UjProjekt.png)
+
+![Üres projekt áttekintő oldal](/images/screenshots/06_UresProjekt.png)
+
+**Eredmény:**
+A projekt létrejön, és megjelenik a projektek listájában. Ettől kezdve modulok, journey-k és teszttervek hozhatók létre benne.
+
+**Gyakori hibák:**
+- Ha a projekt neve már létezik, a rendszer jelzi – adjon egyedi nevet.
+- Ha a Mentés gomb inaktív, ellenőrizze a kötelező mezők kitöltöttségét.
+
+---
+
+### Modul hozzáadása projekthez
+
+**Cél:**
+A projekten belüli funkcionális területek szervezése modulokba.
+
+**Előfeltételek:**
+Szerkesztői vagy adminisztrátori jogosultság; legalább egy létező projekt.
+
+**Lépések:**
+
+1. Az oldalsávban nyissa meg a kívánt projektet, vagy navigáljon a **Modulok** menüpontra.
+2. Kattintson az **Új modul** gombra.
+3. Adja meg a modul **Nevét** (kötelező).
+4. Válassza ki a **Projektet**, amelyhez a modul tartozzon.
+5. Opcionálisan adjon meg **Leírást** és **Sorrendet**.
+6. Kattintson a **Mentés** gombra.
+
+![Új modul létrehozása](/images/screenshots/18_UjModul.png)
+
+**Eredmény:**
+A modul megjelenik a projekt moduljai között, és journey-k adhatók hozzá.
+
+**Gyakori hibák:**
+- Ha nem választ projektet, a modul nem menthető.
+
+---
+
+### Journey létrehozása
+
+**Cél:**
+Egy felhasználói folyamat dokumentálása egy modulon belül.
+
+**Előfeltételek:**
+Szerkesztői vagy adminisztrátori jogosultság; legalább egy létező modul.
+
+**Lépések:**
+
+1. Navigáljon a **Journey-k** menüpontra, vagy nyissa meg a kívánt modult és kattintson a Journey-k fülre.
+2. Kattintson az **Új journey** gombra.
+3. Adja meg a journey **Nevét** (kötelező).
+4. Válassza ki a **Modult** (kötelező).
+5. Opcionálisan adja meg az **Almodul** mezőt, ha finomabb csoportosítást szeretne.
+6. Kattintson a **Mentés** gombra.
+
+![Új journey létrehozása](/images/screenshots/19_UjJourney.png)
+
+**Eredmény:**
+A journey létrejön és verziók adhatók hozzá.
+
+**Gyakori hibák:**
+- Modul kiválasztása nélkül a journey nem menthető.
+
+---
+
+### Journey verzió létrehozása és közzététele
+
+**Cél:**
+Tesztelésre kész teszteset (journey verzió) elkészítése és közzététele.
+
+**Előfeltételek:**
+Szerkesztői vagy adminisztrátori jogosultság; legalább egy létező journey.
+
+**Lépések:**
+
+1. Nyissa meg a kívánt journey részletes oldalát.
+2. Lépjen a **Verziók** fülre, és kattintson az **Új verzió** gombra.
+3. Adja meg a **Verzió címkét** (pl. `v1.0`).
+4. Hagyja bekapcsolva a **Vázlat** állapotot, amíg a lépések nincsenek kész állapotban.
+5. Kattintson a **Mentés** gombra.
+6. A verzió oldalán adja hozzá a tesztlépéseket (lsd. Lépések szerkesztése).
+7. Ha a lépések teljesek, kapcsolja ki a **Vázlat** kapcsolót, és kattintson ismét a **Mentés** gombra.
+
+![Új journey verzió létrehozása](/images/screenshots/20_UjJourneyVerzio.png)
+
+![Kész journey verzió](/images/screenshots/22_KeszJourney.png)
+
+**Eredmény:**
+A verzió közzétett állapotba kerül, és a Tesztterv-készítőből kiválaszthatóvá válik.
+
+**Gyakori hibák:**
+- Vázlat állapotban lévő verzió nem jelenik meg a Tesztterv-készítőben – közzé kell tenni.
+- Ha elfelejtette a Mentés gombot megnyomni a Vázlat kapcsoló kikapcsolása után, az állapot nem módosul.
+
+---
+
+### Tesztlépések hozzáadása journey verzióhoz
+
+**Cél:**
+A teszteset egyes elvégzendő műveleteinek dokumentálása.
+
+**Előfeltételek:**
+Szerkesztői vagy adminisztrátori jogosultság; legalább egy létező journey verzió.
+
+**Lépések:**
+
+1. Nyissa meg a journey verzió részletes oldalát.
+2. Kattintson a **Lépés hozzáadása** gombra.
+3. Töltse ki a **Definíció** mezőt (mit kell tenni, pl. „Navigálj a bejelentkezési oldalra").
+4. Töltse ki az **Eseménynév** mezőt (várt esemény vagy eredmény, pl. `login_page_view`).
+5. Opcionálisan adjon meg:
+   - **Figma-linket** tervhivatkozáshoz,
+   - **Megjegyzést** a tesztelőnek,
+   - **Web / iOS / Android** platformspecifikus megjegyzéseket.
+6. Ismételje meg minden lépésnél.
+7. A lépések sorrendje drag-and-drop módszerrel módosítható.
+
+![Tesztlépés szerkesztője és eseménysémák](/images/screenshots/31_StepSzerkesztes+Sema.png)
+
+![Lépések drag-and-drop átrendezése](/images/screenshots/29_NestedSetDragAndDrop.png)
+
+**Eredmény:**
+A lépések bekerülnek a verzióba, és a tesztfuttató ezek alapján vezeti a tesztelőt.
+
+**Gyakori hibák:**
+- Ha a Definíció mező üres, a lépés nem menthető.
+- Ha a lépések sorrendje elcsúszik, húzza vissza drag-and-drop módszerrel.
+
+---
+
+### Lépések tömeges importálása Excel-fájlból
+
+**Cél:**
+Meglévő teszteset-dokumentáció gyors átemelése az Analyse-ba Excel-fájlból.
+
+**Előfeltételek:**
+Szerkesztői vagy adminisztrátori jogosultság; legalább egy létező journey verzió; a rendszer sablonformátumának megfelelő Excel-fájl.
+
+**Lépések:**
+
+1. Nyissa meg a journey verzió oldalát.
+2. Töltse le a **Lépéssablont** az **Exportálás → Lépéssablon (.xlsx)** gombbal.
+3. Töltse ki a sablont a tesztlépések adataival.
+4. Kattintson az **Importálás** gombra a verzió oldalán.
+5. Válassza ki az elkészített Excel-fájlt, és kattintson a feltöltés gombra.
+
+![Lépések tömeges importálása](/images/screenshots/27_StepMassImport.png)
+
+![Importált lépések a verzióban](/images/screenshots/28_StepImported.png)
+
+**Eredmény:**
+A fájlban szereplő lépések bekerülnek a journey verzióba.
+
+**Gyakori hibák:**
+- Ha nem a rendszer sablonját használja, az importálás meghiúsulhat – mindig a letöltött sablonnal dolgozzon.
+- Ha a fájl formátuma sérült vagy hibás adatokat tartalmaz, hibaüzenet jelenik meg – ellenőrizze a fájlt és próbálja újra.
+
+---
+
+### Tesztterv összeállítása
+
+**Cél:**
+Egy tesztelési ciklushoz szükséges journey verziók kiválasztása és csapattagokhoz rendelése.
+
+**Előfeltételek:**
+Szerkesztői vagy adminisztrátori jogosultság; legalább egy aktív tesztterv; legalább egy közzétett journey verzió.
+
+**Lépések:**
+
+1. Az oldalsávban nyissa meg a **Tesztterv-készítőt**.
+2. A készítő automatikusan betölti az aktív teszttervet. Ha több terv van, válassza ki a megfelelőt.
+3. A bal oldali projektfával navigáljon a kívánt modulhoz és journey-hez.
+4. Jelölje be a bevonni kívánt journey verzió melletti jelölőnégyzetet.
+5. A **Hozzárendelt személy** legördülőjéből válassza ki a felelős tesztelőt.
+6. Ismételje meg minden bevonandó verziónál.
+7. Kattintson a **Terv mentése** gombra.
+
+![Felelős megadása tesztterv elemekhez](/images/screenshots/35_FelelosMegadasaTesztterv.png)
+
+![Kiküldött e-mail értesítés a tesztelőknek](/images/screenshots/36_KikuldottEmail.png)
+
+**Eredmény:**
+A terv mentésre kerül, és a hozzárendelt tesztelők e-mail-értesítést kapnak a feladataikról.
+
+**Gyakori hibák:**
+- Ha egy journey verzió nem jelenik meg a listában, ellenőrizze, hogy közzé van-e téve (nem vázlat állapotban van-e).
+- Ha az e-mail nem érkezik meg, ellenőrizze a spam mappát.
+
+---
+
+### Tesztfuttatás indítása
+
+**Cél:**
+Egy teszttervhez tartozó tesztek tényleges elvégzése és dokumentálása.
+
+**Előfeltételek:**
+Szerkesztői vagy adminisztrátori jogosultság; legalább egy aktív tesztterv; legalább egy teszttervbe felvett journey verzió.
+
+**Lépések:**
+
+1. Navigáljon a **Tesztfuttatások** menüpontra.
+2. Kattintson az **Új tesztfuttatás** gombra.
+3. Válassza ki a **Teszttervet** (kötelező).
+4. Opcionálisan adja meg a **Futtatás nevét**, válasszon **Környezetet** (pl. staging) és kapcsoljon hozzá **Kiadást**.
+5. Kattintson a **Mentés** gombra.
+
+![Új tesztfuttatás létrehozása](/images/screenshots/42_UjFuttatas.png)
+
+![Friss tesztfuttatás áttekintő kártya](/images/screenshots/43_FrissFuttatas.png)
+
+**Eredmény:**
+A tesztfuttatás létrejön „Függőben" állapotban, és a Tesztfuttatóban megnyitható.
+
+**Gyakori hibák:**
+- Ha nincs aktív tesztterv, a futtatás nem hozható létre – előbb hozzon létre vagy aktiváljon egy teszttervet.
+
+---
+
+### Tesztek végrehajtása a Tesztfuttatóban
+
+**Cél:**
+A tesztterv lépésenkénti elvégzése és az eredmények rögzítése.
+
+**Előfeltételek:**
+Megtekintői, szerkesztői vagy adminisztrátori jogosultság; hozzárendelt vagy nyitott tesztfuttatás.
+
+**Lépések:**
+
+1. Nyissa meg a tesztfuttatást a listából, és kattintson a **Megnyitás Tesztfuttatóban** gombra, vagy navigáljon a **Tesztfuttató** menüpontra az oldalsávban.
+2. A bal oldali fából válassza ki a végrehajtani kívánt journey verziót.
+3. Lépjen végig a lépéseken. Minden lépésnél válasszon eredményt:
+   - **Sikeres** – a lépés az elvárásoknak megfelelően futott le
+   - **Sikertelen** – a lépés nem az elvárásoknak megfelelően viselkedett
+   - **Blokkolt** – a lépés nem hajtható végre külső akadályozó miatt
+   - **Kihagyott** – a lépés szándékosan nem kerül végrehajtásra
+4. Opcionálisan adjon meg **megjegyzést** az adott lépésnél.
+5. Sikertelen lépésnél kattintson a **Hiba naplózása** gombra, és töltse ki a hibajegy adatait.
+6. Ismételje meg az összes journey verzióra.
+
+![Tesztfuttató – teljes futtatás minden tesztesettel](/images/screenshots/44_TeljesFuttatasMindenEset.png)
+
+![Journey-szintű hiba a tesztfuttatóban](/images/screenshots/46_JourneySzintuHiba.png)
+
+**Eredmény:**
+A lépések eredményei mentésre kerülnek. A journey verzió összesített eredménye automatikusan számítódik: ha bármely lépés sikertelen, az egész verzió sikertelen lesz.
+
+**Gyakori hibák:**
+- Ha a Tesztfuttató nem frissül, próbálja meg újratölteni az oldalt.
+- Ha a hiba naplózása nem sikerül, ellenőrizze, hogy a projekt issue tracker integrációja be van-e állítva.
+
+---
+
+### Journey verzió exportálása PDF-be vagy Excelbe
+
+**Cél:**
+A journey verzió teszteseteinek és eredményeinek exportálása megosztható formátumban.
+
+**Előfeltételek:**
+Megtekintői jogosultság elegendő; legalább egy létező journey verzió.
+
+**Lépések:**
+
+1. Nyissa meg a kívánt journey verzió részletes oldalát.
+2. Kattintson az **Exportálás** gombra.
+3. Válasszon formátumot:
+   - **PDF** – formázott, nyomtatható riport
+   - **Excel (.xlsx)** – táblázatos formátum további feldolgozáshoz
+4. A fájl automatikusan letöltődik.
+
+![Exportálási formátumok választása](/images/screenshots/25_ExportFormats.png)
+
+![PDF export előnézet](/images/screenshots/26_PDFExport.png)
+
+**Eredmény:**
+A fájl letöltődik a számítógépre.
+
+**Gyakori hibák:**
+- Ha a letöltés nem indul el, ellenőrizze, hogy a böngésző engedélyezi-e a felugró ablakokat és a fájlletöltést.
+
+---
+
+### Hibajegy létrehozása tesztfuttatásból
+
+**Cél:**
+Tesztelés közben talált hiba rögzítése a projekt konfigurált hibakövető rendszerében (pl. Jira, Redmine).
+
+**Előfeltételek:**
+A projekt issue tracker integrációja be van állítva; szerkesztői vagy adminisztrátori jogosultság; aktív tesztfuttatás.
+
+**Lépések:**
+
+1. A Tesztfuttatóban jelöljön meg egy lépést **Sikertelen** eredménnyel.
+2. Kattintson a **Hiba naplózása** (vagy **Issue létrehozása**) gombra a lépésnél.
+3. Töltse ki a hibajegy adatait: cím, leírás.
+4. Kattintson a **Mentés** / **Létrehozás** gombra.
+
+**Eredmény:**
+A hibajegy létrejön a konfigurált külső rendszerben, és hivatkozás jelenik meg a tesztlépésnél.
+
+**Gyakori hibák:**
+- Ha a gomb nem érhető el, az issue tracker integráció nincs beállítva – forduljon az adminisztrátorhoz.
+
+---
+
+### Felhasználó jóváhagyása (adminisztrátoroknak)
+
+**Cél:**
+Új felhasználói fiók aktiválása, hogy a felhasználó be tudjon lépni.
+
+**Előfeltételek:**
+Adminisztrátori jogosultság szükséges.
+
+**Lépések:**
+
+1. Az oldalsávban navigáljon a **Felhasználók** menüpontra.
+2. Keresse meg az érintett felhasználót (státusza: nem jóváhagyott).
+3. Nyissa meg a felhasználó részletes oldalát, és kapcsolja be a **Jóváhagyott** kapcsolót.
+4. Kattintson a **Mentés** gombra.
+
+![Felhasználók kezelése](/images/screenshots/11_Felhasznalok.png)
+
+**Eredmény:**
+A felhasználó innentől be tud lépni a rendszerbe.
+
+**Gyakori hibák:**
+- Ha nem találja a felhasználót, ellenőrizze, hogy az e-mail-cím alapján keresett-e.
+
+## Segítség kérése
+
+Ha kérdése vagy problémája merül fel:
+
+- **Beépített súgó:** Az egyes oldalakon megjelenő információs ikonok rövid magyarázatot adnak a mezőkről és funkciókról.
+- **Dokumentáció:** Ez a kézikönyv, valamint az Analyse dokumentációs portálja (ahol elérhető) részletes leírásokat tartalmaz.
+- **Hibabejelentés:** Hiba esetén adja meg a következő információkat a supportnak:
+  - A hiba pontos ideje,
+  - A hiba előtt elvégzett lépések,
+  - Képernyőkép a hibaüzenetről,
+  - Az érintett rekord neve vagy azonosítója (pl. projekt neve, journey verzió),
+  - A böngésző neve és verziója.
+
+> Hibabejelentési csatorna: **[KITÖLTENDŐ]**
+
+---
+
+# Referencia
+
+## Projektek
+
+### Funkció célja
+Projektek kezelése – létrehozás, szerkesztés, megtekintés. A projekt a legfelső szintű tároló az Analyse-ban.
+
+### Elérés
+Oldalsáv → **Projektek**
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+- Törlés: Admin
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Név | A projekt neve | Igen | Egyedinek kell lennie |
+| Kulcs | Automatikusan generált azonosító | Nem (auto) | A névből jön létre |
+| Leírás | Opcionális szöveges leírás | Nem | |
+| CMP azonosító | CMP integráció konfigurációjához szükséges | Nem | |
+
+### Műveletek
+
+| Művelet | Leírás | Eredmény |
+|---|---|---|
+| Új projekt | Projekt létrehozása | Projekt megjelenik a listában |
+| Szerkesztés | Projekt adatainak módosítása | Adatok frissítve |
+| Törlés | Projekt eltávolítása | Visszavonhatatlan; csak adminok számára |
+| Megtekintés | Projekt részletes adatainak megjelenítése | Részletes oldal megnyílik |
+
+### Validációk és gyakori hibák
+- A Név mező kötelező és egyedi.
+- Ha a projekthez modulok, journey-k vagy teszttervek tartoznak, törlés megakadályozható vagy csak admin végezheti.
+
+### Kapcsolódó funkciók
+Modulok, Journey-k, Teszttervek, Issue Trackerek, Eseménysémák, Kiadások, Környezetek
+
+---
+
+## Modulok
+
+### Funkció célja
+Projektek funkcionális területeinek szervezése modulokba.
+
+### Elérés
+Oldalsáv → **Modulok**, vagy Projekt részletes oldal → Modulok fül
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+- Törlés: Admin
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Név | A modul neve | Igen | |
+| Projekt | Mely projekthez tartozik | Igen | Legördülő lista |
+| Kulcs | Automatikusan generált azonosító | Nem (auto) | |
+| Leírás | Opcionális szöveges leírás | Nem | |
+| Sorrend | Megjelenítési sorrend a listában | Nem | Szám |
+
+### Kapcsolódó funkciók
+Projektek, Journey-k
+
+---
+
+## Journey-k
+
+### Funkció célja
+Felhasználói folyamatok dokumentálása modulokon belül.
+
+### Elérés
+Oldalsáv → **Journey-k**, vagy Modul részletes oldal → Journey-k fül
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+- Törlés: Admin
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Név | A journey neve | Igen | |
+| Modul | Melyik modulhoz tartozik | Igen | Legördülő lista |
+| Almodul | Opcionális finomabb csoportosítás | Nem | Szabad szöveg |
+| Leírás | Opcionális szöveges leírás | Nem | |
+
+### Kapcsolódó funkciók
+Modulok, Journey Verziók
+
+---
+
+## Journey Verziók
+
+### Funkció célja
+A journey egyes verziózott teszteseteinek kezelése. Csak közzétett verzió kerülhet teszttervbe.
+
+### Elérés
+Oldalsáv → **Journey Verziók**, vagy Journey részletes oldal → Verziók fül
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+- Törlés: Admin
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Journey | Melyik journey-hez tartozik | Igen | |
+| Verzió | Verzió azonosítója (pl. `v1.0`) | Igen | |
+| Vázlat | Szerkesztés alatt álló állapot jelzője | Nem | Közzétételhez ki kell kapcsolni |
+| Metaadatok | JSON-alapú extra mezők | Nem | Egyéni mezők konfigurálhatók |
+
+### Műveletek
+
+| Művelet | Leírás | Eredmény |
+|---|---|---|
+| Közzététel | Vázlat kapcsoló kikapcsolása + Mentés | Verzió teszttervbe vehető |
+| Másolás | Verzió klónozása | Új vázlat verzió jön létre az összes lépéssel |
+| Export (PDF) | Lépések exportálása PDF-be | Letölthető PDF fájl |
+| Export (Excel) | Lépések exportálása Excel-be | Letölthető .xlsx fájl |
+| Import | Lépések feltöltése Excel-fájlból | Lépések bekerülnek a verzióba |
+
+![Journey verzió klónozása (másolás)](/images/screenshots/21_JourneyVerzioMasolo.png)
+
+### Validációk és gyakori hibák
+- Vázlat állapotú verzió nem jelenik meg a Tesztterv-készítőben.
+- Importálásnál csak a rendszer sablonformátuma fogadható el.
+
+### Kapcsolódó funkciók
+Journey-k, Journey Lépések, Teszttervek
+
+---
+
+## Journey Lépések
+
+### Funkció célja
+Az egyes tesztlépések meghatározása és szerkesztése egy journey verzión belül.
+
+### Elérés
+Journey Verzió részletes oldal → Lépések fül
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+- Törlés: Admin
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Definíció | A tesztelendő művelet vagy feltétel leírása | Igen | |
+| Eseménynév | A várható esemény vagy eredmény | Nem | GA4 eseménynév |
+| Figma-link | Link a kapcsolódó Figma kerethez | Nem | |
+| Megjegyzés | Opcionális kiegészítő megjegyzés | Nem | |
+| Web | Platformspecifikus megjegyzés webre | Nem | |
+| iOS | Platformspecifikus megjegyzés iOS-re | Nem | |
+| Android | Platformspecifikus megjegyzés Androidra | Nem | |
+
+### Műveletek
+
+| Művelet | Leírás | Eredmény |
+|---|---|---|
+| Hozzáadás | Új lépés létrehozása | Lépés megjelenik a listában |
+| Szerkesztés | Lépés adatainak módosítása | Adatok frissítve |
+| Sorba rendezés | Lépések sorrendjének módosítása (drag-and-drop) | Sorrend frissítve |
+| Beágyazás | Allépés létrehozása | Hierarchikus struktúra |
+| Törlés | Lépés eltávolítása | Visszavonhatatlan |
+
+![Lépések hierarchikus (nested) struktúrája](/images/screenshots/24_JourneyNestedSet.png)
+
+![Figma storyboard előnézet egy lépésnél](/images/screenshots/32_FigmaStoryBoard.png)
+
+### Kapcsolódó funkciók
+Journey Verziók, Eseménysémák
+
+---
+
+## Teszttervek
+
+### Funkció célja
+Tesztelési ciklushoz szükséges journey verziók összegyűjtése és felelősök hozzárendelése.
+
+### Elérés
+Oldalsáv → **Teszttervek**
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+- Törlés: Admin
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Név | A tesztterv neve | Igen | |
+| Projekt | Melyik projekthez tartozik | Igen | |
+| Leírás | Opcionális szöveges leírás | Nem | |
+| Státusz | Tervezet / Aktív / Archivált | Igen | |
+| Aktív | Alapértelmezett terv jelzője | Nem | Projektenként csak egy aktív terv lehet |
+
+![Új tesztterv létrehozása](/images/screenshots/33_UjTesztterv.png)
+
+![Összes tesztterv listanézete](/images/screenshots/34_OsszesTesztterv.png)
+
+### Műveletek
+
+| Művelet | Leírás | Eredmény |
+|---|---|---|
+| Tesztterv-készítő megnyitása | Verzióválasztás és hozzárendelés felülete | Összeállítás és e-mail küldés |
+| Terv mentése | A kiválasztott verziók és hozzárendelések mentése | E-mail értesítés a hozzárendelt tesztelőknek |
+| Aktiválás | Terv aktív állapotra állítása | Ez lesz az alapértelmezett a Tesztterv-készítőben |
+
+### Validációk és gyakori hibák
+- Projektenként csak egy tesztterv lehet aktív; ha egy másikat aktivál, a korábbi inaktívvá válik.
+- Ha az e-mail nem érkezik meg, ellenőrizze a spam mappát; ha továbbra sem érkezik, forduljon az adminisztrátorhoz.
+
+### Kapcsolódó funkciók
+Journey Verziók, Tesztfuttatások, Felhasználók
+
+---
+
+## Tesztfuttatások
+
+### Funkció célja
+Egy tesztterv egyszeri, dokumentált végrehajtása.
+
+### Elérés
+Oldalsáv → **Tesztfuttatások**
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+- Törlés: Admin
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Tesztterv | A futtatás alapját képező terv | Igen | |
+| Név | Futtatás neve | Nem | Auto-generált, ha üresen hagyja |
+| Státusz | Függőben / Folyamatban / Befejezett / Sikertelen | Igen | |
+| Környezet | Tesztelési környezet (pl. staging) | Nem | |
+| Kiadás | Kapcsolódó szoftver kiadás | Nem | |
+| Indítás ideje | Mikor indult a futtatás | Nem | Default: most |
+| Befejezés ideje | Mikor zárult a futtatás | Nem | |
+| Megjegyzés | Szabad szöveges megjegyzés | Nem | |
+
+![Tesztfuttatás kártyanézete](/images/screenshots/47_FuttatasKartya.png)
+
+![Több tesztfuttatás legördülő nézete](/images/screenshots/45_TobbFuttatasDropdown.png)
+
+### Műveletek
+
+| Művelet | Leírás | Eredmény |
+|---|---|---|
+| Tesztfuttatóban megnyitás | Lépésenkénti végrehajtás indítása | Tesztfuttató felület megnyílik |
+| Eredmények megtekintése | Összesített és részletes eredmények megjelenítése | Összesített státusz és részletek |
+| Export | Eredmények exportálása | PDF vagy Excel letöltése |
+
+### Validációk és gyakori hibák
+- Ha a tesztterv nem tartalmaz aktív elemeket, a futtatás üres lesz.
+- Ha az összesített státusz „Sikertelen", vizsgálja meg az egyéni elemek eredményeit.
+
+### Kapcsolódó funkciók
+Teszttervek, Tesztfuttató, Kiadások, Környezetek
+
+---
+
+## Tesztfuttató
+
+### Funkció célja
+Interaktív felület a tesztterv lépésenként elvégzéséhez és eredmények rögzítéséhez.
+
+### Elérés
+Oldalsáv → **Tesztfuttató**, vagy Tesztfuttatás részletes oldal → **Megnyitás Tesztfuttatóban** gomb
+
+### Jogosultság
+Megtekintői jogosultság elegendő az eredmények megtekintéséhez; eredmény rögzítéséhez Szerkesztő vagy Admin szükséges.
+
+### Felületi elemek
+
+| Elem | Leírás |
+|---|---|
+| Bal oldali fa | Projekthierarchia a tervbe felvett journey verziókkal; az egyes elemek státusza megjelenik |
+| Jobb oldali terület | A kiválasztott journey verzió lépéseinek listája, eredménnyel és megjegyzésmezőkkel |
+| Eredmény gombok | Sikeres / Sikertelen / Blokkolt / Kihagyott – minden lépésnél |
+| Megjegyzés mező | Szabad szöveges megjegyzés az adott lépésnél |
+| Hiba naplózása | Hibajegy létrehozása a konfigurált issue trackerben |
+| Hibák exportálása | Platformhibák exportálása Excel-be |
+
+![Tesztfuttató – legutóbbi eredmény megjelenítése](/images/screenshots/49_LegutobbiEredmeny.png)
+
+![Hibák exportálása Excel-be](/images/screenshots/50_HibakExcel.png)
+
+### Kapcsolódó funkciók
+Tesztfuttatások, Issue Trackerek, Journey Verziók
+
+---
+
+## Issue Trackerek
+
+### Funkció célja
+Külső hibakövető rendszer (pl. Jira, Redmine) csatlakoztatása a projekthez, hogy a tesztelők közvetlenül naplózhassanak hibákat.
+
+### Elérés
+Oldalsáv → **Issue Trackerek** (csak adminoknak)
+
+### Jogosultság
+Admin szükséges a konfigurációhoz.
+
+### Támogatott rendszerek
+
+| Rendszer | Típus |
+|---|---|
+| Jira | Atlassian hibakövető |
+| Redmine | Nyílt forráskódú hibakövető |
+| GitLab | GitLab Issues |
+| GitHub | GitHub Issues |
+| Linear | Linear |
+| YouTrack | JetBrains YouTrack |
+| Egyéb | Más rendszer |
+
+![Issue tracker konfiguráció](/images/screenshots/15_IssueTrackerKonfig.png)
+
+### Validációk és gyakori hibák
+- Ha az issue tracker konfigurációja hibás (pl. érvénytelen API token), a hiba naplózása nem sikerül – forduljon az adminisztrátorhoz.
+
+---
+
+## Figma konfiguráció
+
+### Funkció célja
+A Figma tervezőeszköz integrálása, hogy a tesztlépéseknél Figma tervekre lehessen hivatkozni és előnézetet megjeleníteni.
+
+### Elérés
+Oldalsáv → **Figma konfiguráció** (csak adminoknak)
+
+### Jogosultság
+Admin szükséges a konfigurációhoz.
+
+### Mezők
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| API token | Figma API hozzáférési token | Igen | A Figma-fiókból kell kinyerni |
+| Gombok engedélyezése | Figma-előnézeti gombok megjelenítése a lépéseknél | Nem | Alapértelmezett: kikapcsolt |
+
+![Figma konfiguráció oldal](/images/screenshots/09_FigmaKonfig.png)
+
+---
+
+## CMP konfiguráció
+
+### Funkció célja
+A Consent Management Platform (CMP) integrálása az eseménysémák betöltéséhez.
+
+### Elérés
+Oldalsáv → **CMP konfiguráció** (csak adminoknak)
+
+### Jogosultság
+Admin szükséges.
+
+![CMP konfiguráció](/images/screenshots/07_CMPKonfig.png)
+
+![CMP konfiguráció – Excel sablon](/images/screenshots/08_CMPKonfigExcel.png)
+
+> A funkció technikusan azonosítható, de az üzleti értelmezés pontosítása szükséges.
+
+---
+
+## Eseménysémák
+
+### Funkció célja
+A Google Analytics (GA4) eseménystruktúra dokumentálása projektenként.
+
+### Elérés
+Oldalsáv → **Eseménysémák** (vagy Projekt részletes oldal → Eseménysémák fül)
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+
+### Leírás
+Az eseménysémák lehetővé teszik, hogy projektenként rögzítsék a várt GA4 eseményeket és azok paramétereit. A tesztlépéseknél az eseménynév mezők kitöltésekor ezek a sémák referenciaként szolgálnak.
+
+![Eseménysémák szerkesztő főképernyő](/images/screenshots/37_SemaszerkesztoFokepernyo.png)
+
+![Séma elemek szerkesztője](/images/screenshots/38_SemaElemekSzekeszto.png)
+
+---
+
+## Kiadások
+
+### Funkció célja
+Szoftverkiadások (release-ek) kezelése; tesztfuttatások kapcsolhatók hozzájuk a nyomon követhetőséghez.
+
+### Elérés
+Oldalsáv → **Kiadások** (a Beállítások csoportban)
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Név | A kiadás neve | Igen | |
+| Verzió | Szöveges verziócímke (pl. `2.5.0`) | Nem | |
+| Státusz | Közelgő / Kiadva | Igen | |
+| Kiadási dátum | A kiadás dátuma | Nem | |
+| Megjegyzések | Szabad szöveges megjegyzés | Nem | |
+
+![Új kiadás létrehozása](/images/screenshots/41_UjRelease.png)
+
+---
+
+## Tesztkörnyezetek
+
+### Funkció célja
+Tesztelési környezetek (pl. fejlesztői, staging, éles) konfigurálása projektenként.
+
+### Elérés
+Oldalsáv → **Tesztkörnyezetek**
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Név | A környezet neve | Igen | |
+| Domain | A környezet URL-je | Nem | |
+| Típus | Fejlesztői / Staging / Éles / Egyéb | Nem | |
+| Státusz | Aktív / Inaktív | Nem | |
+| Leírás | Opcionális megjegyzés | Nem | |
+
+![Tesztkörnyezetek listája](/images/screenshots/40_Kornyezetek.png)
+
+---
+
+## Teszteszközök
+
+### Funkció célja
+Tesztelési eszközök (böngészők, mobileszközök) nyilvántartása projektenként.
+
+### Elérés
+Oldalsáv → **Teszteszközök**
+
+### Jogosultság
+- Megtekintés: minden szerepkör
+- Létrehozás, szerkesztés: Szerkesztő, Admin
+
+### Leírás
+A teszteszközök rögzítése lehetővé teszi, hogy a tesztfuttatásokhoz hozzárendeljenek konkrét eszközöket és böngészőket. Az eszközök manuálisan is felvihetők, illetve BrowserStack-integrációval szinkronizálhatók.
+
+![Teszteszközök hozzáadása](/images/screenshots/39_TeszteszközökHozzáadása.png)
+
+---
+
+## Egyéni mezők
+
+### Funkció célja
+Plusz metaadatmezők hozzáadása bármelyik entitáshoz (tesztfuttatás, journey stb.) projektenként.
+
+### Elérés
+Oldalsáv → **Egyéni mezők** (csak adminoknak)
+
+### Jogosultság
+Admin szükséges a konfigurációhoz.
+
+### Leírás
+Az egyéni mezők segítségével a csapat bármilyen kiegészítő adatot rögzíthet az egyes rekordokon, amelyek nem szerepelnek az alap mezőkészletben (pl. prioritás, tesztelési típus). A mezők konfigurálása után megjelennek a vonatkozó rekordok szerkesztő űrlapjain.
+
+![Egyéni mezők konfigurációja](/images/screenshots/13_EgyediMezok.png)
+
+---
+
+## Tevékenységnapló
+
+### Funkció célja
+Az összes változtatás naplózása és visszakövethetővé tétele – ki, mikor, mit módosított.
+
+### Elérés
+Oldalsáv → **Tevékenységnapló** (csak adminoknak)
+
+### Jogosultság
+Admin szükséges.
+
+### Leírás
+A tevékenységnapló automatikusan rögzít minden létrehozási, módosítási és törlési eseményt a rendszerben. A napló szűrhető eseménytípus és dátum szerint. A végfelhasználó nem módosíthatja a naplót.
+
+![Tevékenységnapló / eseménynapló](/images/screenshots/17_Esemenynaplo.png)
+
+---
+
+## Grafikonok
+
+### Funkció célja
+Vizuális áttekintés a projekt tesztelési aktivitásáról és trendjeiről.
+
+### Elérés
+Oldalsáv → **Grafikonok**
+
+### Jogosultság
+Minden szerepkör megtekintheti.
+
+### Megjelenített adatok
+- Issue tracker megoszlás projekteken belül
+- Journey-k és verziók időbeli alakulása
+- Projektek száma hónapok szerint
+- Lépések száma időbeli bontásban
+
+![Grafikonok – analitika irányítópult](/images/screenshots/10_Grafikonok.png)
+
+---
+
+## Felhasználók kezelése
+
+### Funkció célja
+Felhasználói fiókok létrehozása, szerkesztése, jóváhagyása és szerepkörök kiosztása.
+
+### Elérés
+Oldalsáv → **Felhasználók** (csak adminoknak)
+
+### Jogosultság
+Admin szükséges.
+
+### Mezők és vezérlőelemek
+
+| Mező / elem | Leírás | Kötelező | Megjegyzés |
+|---|---|---|---|
+| Név | Felhasználó teljes neve | Igen | |
+| E-mail | E-mail cím (bejelentkezési azonosító) | Igen | Egyedinek kell lennie |
+| Jelszó | Belépési jelszó | Igen (létrehozáskor) | |
+| Szerepkörök | Admin / Szerkesztő / Megtekintő | Nem | Több is hozzárendelhető |
+| Jóváhagyott | Belépési engedély jelzője | Nem | Be kell kapcsolni a belépés engedélyezéséhez |
+| Alapértelmezett projekt | Melyik projekt legyen az alapértelmezett | Nem | |
+
+![Jogosultságkezelés részletei](/images/screenshots/12_Jogosultsagkezeles.png)
+
+---
+
+# Beállítások
+
+Az alábbi beállítások érhetők el végfelhasználói szinten:
+
+| Beállítás | Hol található | Hatása | Megjegyzés |
+|---|---|---|---|
+| Megjelenési mód (sötét/világos) | Navigációs sáv jobb felső sarokban (témaváltó ikon) | Az egész felület megjelenési módját váltja | Böngészőnként/eszközönként megjegyzi |
+| Alapértelmezett projekt | Felhasználói profil vagy oldalsáv projekt-váltó | Belépés után ezt a projektet tölti be alapértelmezettként | Adminisztrátor is beállíthatja |
+| Jelszóváltoztatás | Felhasználói profil oldalon | A bejelentkezési jelszó frissítése | Erős jelszó ajánlott |
+
+Az alkalmazásban azonosítható egyéb, végfelhasználó által módosítható beállítás a rendelkezésre álló forrásokból nem azonosítható.
+
+Rendszerszintű beállítások (Figma token, issue tracker konfiguráció, CMP konfiguráció, egyéni mezők) csak adminisztrátori jogosultsággal módosíthatók.
+
+---
+
+# Hibák
+
+## Leggyakrabban felmerülő hibák és elhárításuk
+
+| Hiba | Lehetséges ok | Felhasználói teendő | Mikor kell supporthoz fordulni |
+|---|---|---|---|
+| „A fiókja nincs jóváhagyva" | A felhasználói fiók jóváhagyásra vár | Forduljon az adminisztrátorhoz | Ha az adminisztrátor nem elérhető |
+| Bejelentkezési hiba (helytelen jelszó) | Hibásan beírt jelszó | Ellenőrizze a jelszót, használja az „Elfelejtett jelszó" funkciót | Ha az e-mail nem érkezik meg |
+| „Nincs jogosultsága ehhez a művelethez" | Az aktuális szerepkör nem engedélyezi a műveletet | Forduljon az adminisztrátorhoz szerepkör-módosításért | Ha a jogosultság indokolatlan |
+| Journey verzió nem jelenik meg a Tesztterv-készítőben | A verzió vázlat állapotban van | Tegye közzé a verziót (kapcsolja ki a Vázlat kapcsolót) | Ha közzétett állapotban sem jelenik meg |
+| Import sikertelen | Hibás fájlformátum vagy nem a sablon alapján töltötték ki | Töltse le a sablont és töltse ki azt | Ha a sablon alapján is sikertelen |
+| E-mail értesítés nem érkezett meg | Spam szűrő, hibás e-mail-cím | Ellenőrizze a spam mappát, ellenőrizze az e-mail-cím helyességét | Ha spam mappában sem található |
+| Hibajegy nem hozható létre | Issue tracker integráció nincs beállítva vagy hibás | Forduljon az adminisztrátorhoz | Mindig |
+| Figma előnézet nem töltődik be | API token hiányzik vagy lejárt; a Figma link helytelen | Ellenőrizze a Figma-linket; forduljon az adminisztrátorhoz a token megújításáért | Ha a token megújítása után sem működik |
+| PDF export nem töltődik le | Böngésző blokkolja a felugró ablakokat | Engedélyezze a felugró ablakokat a rendszer domainjére | Ha az engedélyezés után sem működik |
+| Az oldal nem töltődik be | Hálózati probléma; szerver leállás | Ellenőrizze az internetkapcsolatot; próbálja meg újra | Ha az újrapróbálás után is fennáll |
+| A Tesztfuttató nem frissül | WebSocket kapcsolat megszakadása | Töltse újra az oldalt | Ha az újratöltés után is fennáll |
+
+## Általános hibakezelés
+
+Ismeretlen hiba esetén kövesse az alábbi lépéseket:
+
+1. **Frissítse az oldalt** (F5 vagy a böngésző frissítés gombja).
+2. **Ellenőrizze az internetkapcsolatot** – próbáljon meg más oldalt megnyitni.
+3. **Ellenőrizze, hogy be van-e jelentkezve** – ha kijelentkeztette a rendszer, lépjen be újra.
+4. **Próbálja meg újra a műveletet** – néhány hiba átmeneti jellegű.
+5. **Jegyezze fel a hiba pontos idejét** és körülményeit.
+6. **Készítsen képernyőképet** a hibaüzenetről.
+7. **Írja le, milyen lépések vezettek a hibához.**
+8. **Adja meg az érintett rekord azonosítóját** (pl. projekt neve, journey verzió neve, tesztfuttatás neve).
+9. **Továbbítsa az információkat a supportnak** a megadott csatornán.
+
+> Hibabejelentési csatorna: **[KITÖLTENDŐ]**
+
+---
+
+# Adat- és informatikai biztonság
+
+## Adatbiztonság
+
+Az Analyse tesztmenedzsment adatokat kezel: projekt- és teszteset-dokumentációkat, teszteredményeket, hibajelentéseket és felhasználói adatokat. Ezek az adatok belső üzleti tartalmakat képviselnek, amelyek kezelésénél az alábbi szabályokat kell betartani:
+
+- **Exportált fájlok kezelése:** A rendszerből PDF vagy Excel formátumban exportált fájlok bizalmas adatokat tartalmazhatnak. Ne ossza meg ezeket illetéktelen személyekkel, és törölje őket, ha már nincs szüksége rájuk.
+- **Importált fájlok megbízhatósága:** Csak megbízható forrásból származó, ellenőrzött Excel-fájlokat töltsön fel. Ismeretlen forrásból érkező fájlokat ne importáljon.
+- **Adatmódosítás:** Csak azokat az adatokat módosítsa, amelyekre jogosultsággal rendelkezik. Jogosulatlan módosítás adatvesztéshez vagy hibás teszteredményekhez vezethet.
+- **Adattovábbítás:** Ne továbbítsa a rendszerben tárolt adatokat jogosulatlan személyeknek vagy külső rendszerekbe, hacsak ez a munkavégzés részét nem képezi.
+
+## Jelszókezelés
+
+- **Ne ossza meg jelszavát** senkivel – beleértve a kollégákat és az adminisztrátorokat is.
+- **Ne tárolja jelszavát** nyilvánosan elérhető helyen (pl. cetlire írva, megosztott dokumentumban, e-mailben).
+- **Közös gépen mindig jelentkezzen ki** a munka végeztével.
+- **Gyanús hozzáférés esetén azonnal változtassa meg a jelszavát** és értesítse az adminisztrátort.
+- **Erős jelszót válasszon:** legalább 8 karakter, vegyen bele számokat, nagybetűket és különleges karaktereket.
+- Ha a rendszer külső azonosítást (pl. szervezeti SSO) alkalmaz, a jelszókezelési szabályokat az azt nyújtó rendszer előírásai szerint kell betartani.
+
+## Egyéb tudnivalók
+
+- **Képernyőzárolás:** Ha elhagyja a munkaállomást, zárolja a képernyőt, hogy mások ne férhessenek hozzá a fiókjához.
+- **Nyilvános vagy közös gépen való használat kerülendő.** Ha mégis szükséges, a munka végeztével azonnal jelentkezzen ki, és törölje a böngészési előzményeket.
+- **Érzékeny adatok képernyőn hagyása:** Ne hagyja hosszabb ideig felügyelet nélkül a monitort, ha azon bizalmas tesztadatok jelennek meg.
+- **Letöltött fájlok törlése:** Ha egy exportált fájlra már nincs szüksége, törölje a számítógépéről.
+- **Jogosultsági problémák jelentése:** Ha azt észleli, hogy más felhasználó nevében tudna belépni, vagy olyan adatokhoz fér hozzá, amelyekhez nem kellene, azonnal jelentse az adminisztrátornak.
+
+## Gyanús események bejelentése
+
+Ha az alábbiak bármelyikét tapasztalja, kövesse az alábbi lépéseket:
+
+- Ismeretlen bejelentkezést észlel a fiókjában,
+- Adatok váratlanul megváltoztak anélkül, hogy Ön módosította volna,
+- Jogosulatlan hozzáférés gyanúja merül fel,
+- Szokatlan rendszerüzenetet lát,
+- Többszöri beléptetési vagy jogosultsági problémát tapasztal.
+
+**Teendők:**
+
+1. **Ne folytassa az érintett műveletet**, ha az további kárt okozhat.
+2. **Jegyezze fel az esemény pontos idejét.**
+3. **Készítsen képernyőképet**, ha lehetséges.
+4. **Jelentse az eseményt a kijelölt kapcsolattartónak** a lehető leghamarabb.
+5. **Ne ossza meg az esemény részleteit illetéktelen személyekkel** – az eljárás lezárásáig tartsa bizalmasan.
+
+> Biztonsági incidensek bejelentési csatornája: **[KITÖLTENDŐ]**

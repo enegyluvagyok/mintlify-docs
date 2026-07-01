@@ -27,6 +27,12 @@
         "tab": "Felhasználói kézikönyvek",
         "groups": [
           {
+            "group": "Kézikönyv",
+            "pages": [
+              "felhasznaloi-kezikonyv"
+            ]
+          },
+          {
             "group": "Telepítés",
             "pages": [
               "tech/telepitesi-kezikoenyv"

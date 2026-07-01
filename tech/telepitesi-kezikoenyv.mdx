@@ -23,7 +23,7 @@ A telepítés megkezdése előtt győződj meg arról, hogy az alábbiak rendelk
 
 ## Telepítési lépések
 
-### 1. A csomag letöltése
+### A csomag letöltése
 
 ```bash
 # Klónozd a repositoryt vagy töltsd le a kiadott csomagot
@@ -31,7 +31,7 @@ git clone https://github.com/your-org/analyse.git
 cd analyse
 ```
 
-### 2. Függőségek telepítése
+### Függőségek telepítése
 
 ```bash
 # PHP függőségek (vendor/ mappa feltöltése)
@@ -42,7 +42,7 @@ npm install
 npm run build
 ```
 
-### 3. Környezeti változók beállítása
+### Környezeti változók beállítása
 
 Másold le a példa konfigurációs fájlt és töltsd ki a szükséges értékekkel:
 
@@ -93,7 +93,7 @@ A legfontosabb környezeti változók:
 | `VITE_REVERB_PORT` | `443` | Echo kliens port (Nginx-en át) |
 | `VITE_REVERB_SCHEME` | `https` | Echo kliens scheme |
 
-### 4. MySQL adatbázis előkészítése és inicializálása
+### MySQL adatbázis előkészítése és inicializálása
 
 ```sql
 -- MySQL shellben (root felhasználóként):
@@ -115,7 +115,7 @@ php artisan db:seed --force
   A migrációs fájlok a `database/migrations/` mappában találhatók. Az `artisan migrate` csak a még le nem futott migrációkat alkalmazza — frissítéskor is biztonságos.
 </Info>
 
-### 5. Laravel inicializálása
+### Laravel inicializálása
 
 ```bash
 # App key generálása (ha még nincs .env-ben)
@@ -138,7 +138,7 @@ php artisan view:cache
 php artisan event:cache
 ```
 
-### 6. Nginx konfigurálása
+### Nginx konfigurálása
 
 Az alkalmazás **Laravel Octane (Swoole)** alapon fut — a Nginx nem PHP-FPM-re, hanem az Octane HTTP szerverre proxyzza a kéréseket. A **Reverb WebSocket szerver** szintén Nginx-en keresztül érhető el WSS protokollon.
 
@@ -215,7 +215,7 @@ nginx -t && systemctl reload nginx
   Laravel Octane Swoole alapon fut — **nem szükséges** PHP-FPM konfiguráció az alkalmazásforgalomhoz. A PHP-FPM eltávolítható vagy más célra használható. Az Octane szervere a `8000`-es porton hallgat, a Reverb a `8080`-ason.
 </Info>
 
-### 7. Supervisor konfigurálása (Octane \+ Queue worker \+ Reverb)
+### Supervisor konfigurálása (Octane + Queue worker + Reverb)
 
 Hozz létre három Supervisor konfigurációs fájlt:
 
@@ -282,7 +282,7 @@ sudo supervisorctl start "analyse-worker:*"
 sudo supervisorctl start analyse-reverb
 ```
 
-### 8. Első rendszergazda fiók létrehozása
+### Első rendszergazda fiók létrehozása
 
 Az adminisztrátori fiók létrehozásához a Filament beépített parancsát használd:
 
